@@ -1,6 +1,7 @@
 import pandas as pd
 import logging
 import os
+import zipfile
 
 log = logging.getLogger('Unfaelle')
 
@@ -11,7 +12,7 @@ KREIS_ID = 34
 GEMEINDE_ID = 2
 
 # Folder containing the CSV exports
-DIRECTORY_CSV = "Unfallatlas CSV"
+DIRECTORY_CSV = "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas"
 
 START_YEAR = 2016
 END_YEAR = 2022
@@ -33,6 +34,22 @@ def read_unfaelle_csv() -> pd.DataFrame:
     accidents_df = pd.DataFrame()
     
     filenames = os.listdir(DIRECTORY_CSV)
+    
+    # for year in range(START_YEAR,END_YEAR+1):
+    #     filename = f"Unfallorte{year}_EPSG25832_CSV.zip"
+    #     directory = f"{DIRECTORY_CSV}/{filename}"
+    #     data = pd.read_csv(directory, 
+    #                        delimiter = ";", 
+    #                        decimal = ",",
+    #                        usecols = ["OBJECTID", "ULAND", 
+    #                                   "UREGBEZ", "UKREIS",
+    #                                   "UGEMEINDE", "UJAHR", 
+    #                                   "IstRad", "IstFuss", 
+    #                                   "LINREFX", "LINREFY", 
+    #                                   "XGCSWGS84", "YGCSWGS84"],
+    #                        index_col = "OBJECTID")
+        
+    #     accidents_df = pd.concat([accidents_df, data])
     
     for filename in filenames:
         directory =f"{DIRECTORY_CSV}/{filename}"

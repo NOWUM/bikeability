@@ -198,3 +198,4 @@ def visualize_scores(network: nx.MultiDiGraph,
                             vmin = 0,
                             vmax = 100)
     return vis
+

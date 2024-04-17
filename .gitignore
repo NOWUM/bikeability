@@ -2,4 +2,7 @@
 *.log
 *.h5
 *.csv
-.spyproject
+*.spyproject
+*.html
+*.json
+*.pyc

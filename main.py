@@ -5,119 +5,38 @@ import osmnx as ox
 import geopandas as gpd
 import pandas as pd
 import helper
+from import_osm import import_osm
 from shapely.geometry import Point
-
-ACCIDENT_PATH = "accident_data/accidents_foot.h5"
-EXPORT_PATH = "results"
-
-# Points of interest (POIs)
-FAMILY_POIS = {
-    "amenity": [
-        "kindergarten",
-        "school",
-        "bus_station",
-        "car_sharing",
-        "pharmacy",
-        "doctors",
-        "cinema"],
-    "shop": [
-        "bakery",
-        "supermarket",
-        "greengrocer"]}
-
-SENIOR_POIS = {
-    "amenity": [
-        "cafe",
-        "bus_station",
-        "bank",
-        "pharmacy",
-        "place_of_worship",
-        "doctors",
-        "theatre"],
-    "shop": [
-        "bakery",
-        "supermarket",
-        "butcher"]}
-
-STUDENT_POIS = {
-    "amenity": [
-        "bar",
-        "cafe",
-        "library",
-        "university",
-        "bus_station",
-        "parcel_locker",
-        "pharmacy",
-        "doctors"],
-    "shop": [
-        "hairdresser",
-        "supermarket"]}
-
-# Weight factors
-FAMILY_WEIGHT_FACTORS = {
-    "kindergarten": [9, 0, 0],
-    "school": [8, 0, 0],
-    "bus_station": [4, 0, 0],
-    "car_sharing": [5, 0, 0],
-    "pharmacy": [6, 0, 0],
-    "doctors": [7, 0, 0],
-    "cinema": [1, 0, 0],
-    "bakery": [3, 0, 0],
-    "supermarket": [10, 0, 0],
-    "greengrocer": [2, 0, 0]}
-
-SENIOR_WEIGHT_FACTORS = {
-    "cafe": [5, 0, 0],
-    "bus_station": [2, 0, 0],
-    "bank": [3, 0, 0],
-    "pharmacy": [8, 0, 0],
-    "place_of_worship": [6, 0, 0],
-    "doctors": [10, 0, 0],
-    "theatre": [1, 0, 0],
-    "bakery": [7, 0, 0],
-    "supermarket": [9, 0, 0],
-    "butcher": [4, 0, 0]}
-
-STUDENT_WEIGHT_FACTORS = {
-    "bar": [4, 0, 0],
-    "cafe": [3, 0, 0],
-    "library": [9, 0, 0],
-    "university": [10, 0, 0],
-    "bus_station": [4, 0, 0],
-    "parcel_locker": [1, 0, 0],
-    "pharmacy": [5, 0, 0],
-    "doctors": [6, 0, 0],
-    "hairdresser": [2, 0, 0],
-    "supermarket": [7, 0, 0]}
-
-MAX_DISTANCE = 800
+from bikeability_config import ACCIDENT_PATH,EXPORT_PATH, CITY, DEFAULT_SCORES, \
+    TRANSLATION_FACTORS, POIS, PERSONA_WEIGHTS, PERSONA_NAMES, MAX_DISTANCE, \
+    USE_ACCIDENTS
+import accident_data.accidents_util as acd
 
 # logging
-log = logging.getLogger("Walkability")
+log = logging.getLogger("Bikeability")
 logging.basicConfig(
-    filename="walkability.log",
+    filename="bikeability.log",
     level=logging.INFO,
     format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
     datefmt="%d-%m-%Y %H:%M:%S")
 
 
 def fetch_network_edges(
-        city: str) -> Tuple[nx.MultiDiGraph, gpd.GeoDataFrame]:
+        city: str) -> tuple[nx.MultiDiGraph, gpd.GeoDataFrame]:
     """
     Fetches network and it's edges for given city in EPSG:25832.
     """
 
     # get original network
-    network = ox.graph_from_place(city, network_type="walk")
+    network = ox.graph_from_place(city, network_type="bike")
 
     # fetch the edges
-    network_edges = ox.graph_to_gdfs(network, nodes=False)
+    # network_edges = ox.graph_to_gdfs(network, nodes=False)
 
     # convert to EPSG:25832
     network = ox.project_graph(network, to_crs="EPSG:25832")
-    network_edges.to_crs("EPSG:25832", inplace=True)
-
-    return network, network_edges
+    # network_edges.to_crs("EPSG:25832", inplace=True)
+    return network
 
 
 def fetch_buildings(
@@ -186,28 +105,6 @@ def fetch_POIs(
 
     return pois[["osmid", "geometry", "centroid", "node", "POI_type"]]
 
-
-def fetch_accidents(
-        path: str) -> gpd.GeoDataFrame():
-    """
-    Fetches traffic accident data from the provided file.
-    """
-
-    # read accidents from file
-    accidents = pd.read_hdf(path)
-
-    # reduce accident geometry to points
-    accidents["geometry"] = accidents.apply(lambda x: Point(x["x_linref"],
-                                                            x["y_linref"]),
-                                            axis="columns")
-    # convert to geodataframe
-    accidents = gpd.GeoDataFrame(accidents,
-                                 geometry="geometry",
-                                 crs="epsg:25832")
-    accidents = accidents[["x_linref", "y_linref",
-                           "x_wgs84", "y_wgs84", "geometry"]]
-
-    return accidents
 
 
 def path_to_projection(
@@ -504,26 +401,82 @@ def export_scores(buildings: gpd.GeoDataFrame,
     buildings_for_shp.to_file(f'{filepath}/shp/Walk_{persona_name}.shp')
 
 if __name__ == "__main__":
-
-    POIs = [FAMILY_POIS, STUDENT_POIS, SENIOR_POIS]
-    persona_weights = [
-        FAMILY_WEIGHT_FACTORS,
-        STUDENT_WEIGHT_FACTORS,
-        SENIOR_WEIGHT_FACTORS]
-    persona_names = ["families", "students", "seniors"]
-
-    network, edges = fetch_network_edges("Aachen, Germany")
+    network = fetch_network_edges(CITY)
     log.info("Network and it's edges loaded... ")
+    edges = nx.to_pandas_edgelist(network)
 
-    buildings = fetch_buildings("Aachen, Germany", network)
+    buildings = fetch_buildings(CITY, network)
     log.info("Buildings loaded... ")
+    
+    import_osm = import_osm()
+    scoring, missing_scores = import_osm.score_osm(log, DEFAULT_SCORES)
 
-    accidents = fetch_accidents(path = ACCIDENT_PATH)
+    length_modified = []
+    scores_separation = []
+    scores_surfaces = []
+    geometries = []
+    for index, edge in edges.iterrows():
+        if isinstance(edge.osmid, list):
+            edge.osmid = edge.osmid
+        else:
+            edge.osmid = [edge.osmid]
+        related_scores = scoring[scoring.id.isin(edge.osmid)]
+        geometries.append(scoring["geometry"])
+        if related_scores.size > 0:
+            score_separation = related_scores.score_separation.mean().round()
+            score_surface = related_scores.score_surface.mean().round()
+            modifier = 1 + \
+                TRANSLATION_FACTORS["separation"][score_separation] + \
+                TRANSLATION_FACTORS["surface"][score_surface]
+            length_modified.append(edge.length * modifier)
+            scores_separation.append(score_separation)
+            scores_surfaces.append(score_surface)
+        else:
+            length_modified.append(9999999)
+            scores_separation.append(0)
+            scores_surfaces.append(0)
+    del edge, index, related_scores, score_separation, score_surface, modifier
+        
+    edges.insert(loc = 8, column = "length_modified", value = length_modified)
+    edges.insert(loc = 8, column = "score_separation", value = scores_separation)
+    edges.insert(loc = 8, column = "score_surface", value = scores_surfaces)
+    
+    if USE_ACCIDENTS:
+        accidents = acd.fetch_accidents(path = ACCIDENT_PATH)
+        edges = acd.match_accidents_network(edges, accidents)
+        network = nx.from_pandas_edgelist(df = edges, 
+                                          source = "source", 
+                                          target = "target", 
+                                          edge_attr = ["length", 
+                                                       "length_modified",
+                                                       "score_separation",
+                                                       "score_surface",
+                                                       "accident_count"])
 
-    for persona_POIs, persona_weight, persona_name in zip(POIs, persona_weights, persona_names):
+        del length_modified, scores_separation, scores_surfaces
+
+    # scores_surface = scoring.explore(column = "score_surface", 
+    #                                  cmap = "viridis", vmin = 0, 
+    #                                  vmax = 5, 
+    #                                  tooltip = False, 
+    #                                  popup = False)
+    
+    # scores_separation = scoring.explore(column = "score_separation", 
+    #                                     cmap = "viridis", 
+    #                                     vmin = 0, 
+    #                                     vmax = 5, 
+    #                                     tooltip = False, 
+    #                                     popup = False)
+    
+    # scores_surface.save("surface.html")
+    # scores_separation.save("separation.html")
+    
+    
+
+    for persona_POIs, persona_weight, persona_name in zip(POIS, PERSONA_WEIGHTS, PERSONA_NAMES):
         log.info(f"Starting calculations for {persona_name}... ")
 
-        POIs = fetch_POIs("Aachen, Germany", persona_POIs, network)
+        POIs = fetch_POIs(CITY, persona_POIs, network)
         log.info("Points of interest (POIs) loaded... ")
 
         dist_list = prepare_scoring(buildings, POIs, network, accidents)
