@@ -470,8 +470,6 @@ if __name__ == "__main__":
     
     # scores_surface.save("surface.html")
     # scores_separation.save("separation.html")
-    
-    
 
     for persona_POIs, persona_weight, persona_name in zip(POIS, PERSONA_WEIGHTS, PERSONA_NAMES):
         log.info(f"Starting calculations for {persona_name}... ")
