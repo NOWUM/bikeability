@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List # isort anwenden
 import logging
 import networkx as nx
 import osmnx as ox
@@ -9,7 +9,7 @@ from import_osm import import_osm
 from shapely.geometry import Point
 from bikeability_config import ACCIDENT_PATH,EXPORT_PATH, CITY, DEFAULT_SCORES, \
     TRANSLATION_FACTORS, POIS, PERSONA_WEIGHTS, PERSONA_NAMES, MAX_DISTANCE, \
-    USE_ACCIDENTS
+    USE_ACCIDENTS, FACTOR_WEIGHTS
 import accident_data.accidents_util as acd
 
 # logging
@@ -241,7 +241,92 @@ def prepare_scoring(
 
     return dist_list
 
+def score_network(edges: pd.DataFrame(), scoring: pd.DataFrame()):
+    length_modified = []
+    scores_separation = []
+    scores_surfaces = []
+    geometries = []
+    modifiers = []
+    
+    if USE_ACCIDENTS:
+        accidents = acd.fetch_accidents(path = ACCIDENT_PATH)
+        edges = acd.match_accidents_network(edges, accidents)
+    
+    for index, edge in edges.iterrows():
+        # differentiate between single edges and edge lists
+        if isinstance(edge.osmid, list):
+            edge.osmid = edge.osmid
+        else:
+            edge.osmid = [edge.osmid]
+        
+        # find data corresponding to edge
+        related_scores = scoring[scoring.id.isin(edge.osmid)]
+        geometries.append(scoring["geometry"])
+        
+        
+        
+        if related_scores.size > 0:
+            # If different scores belong to the same edge, the mean is used
+            score_separation = related_scores.score_separation.mean().round()
+            score_surface = related_scores.score_surface.mean().round()
+            score_accident = edge.score_accident
+            # Scale weight factors so they always accord to the same scaling
+            factor_separation = FACTOR_WEIGHTS["separation"]
+            factor_surface = FACTOR_WEIGHTS["surface"]
+            factor_sum = 50 # The sum all weight factors for road suitability schould add up to
+            # Factorise Scores and combine to edge score
+            if USE_ACCIDENTS:
+                factor_accidents = FACTOR_WEIGHTS["accidents"]
+                sum_weights = sum([factor_separation, factor_surface,factor_accidents])
+                factor_separation = factor_separation*factor_sum/sum_weights
+                factor_surface = factor_surface*factor_sum/sum_weights
+                factor_accidents = factor_accidents*factor_sum/sum_weights
+                modifier = 1 + \
+                    TRANSLATION_FACTORS["separation"][score_separation] * score_separation + \
+                    TRANSLATION_FACTORS["surface"][score_surface] * factor_surface + \
+                    TRANSLATION_FACTORS["accidents"][score_accident] * factor_accidents
+            else:
+                modifier = 1 + \
+                    TRANSLATION_FACTORS["separation"][score_separation] * FACTOR_WEIGHTS["separation"] + \
+                    TRANSLATION_FACTORS["surface"][score_surface] * FACTOR_WEIGHTS["surface"]
+            modifiers.append(modifier)
+            length_modified.append(edge.length * modifier)
+            scores_separation.append(score_separation)
+            scores_surfaces.append(score_surface)
+        else:
+            length_modified.append(9999999)
+            modifiers.append(9999999)
+            scores_separation.append(0)
+            scores_surfaces.append(0)
+            
+    edges.insert(loc = 8, column = "length_modified", value = length_modified)
+    edges.insert(loc = 8, column = "score_separation", value = scores_separation)
+    edges.insert(loc = 8, column = "score_surface", value = scores_surfaces)
+    edges.insert(loc = 8, column = "suitability_modifier", value = modifiers)
+    
+    if USE_ACCIDENTS:
+        network = nx.from_pandas_edgelist(df = edges, 
+                                          source = "source", 
+                                          target = "target", 
+                                          edge_attr = ["length", 
+                                                       "length_modified",
+                                                       "score_separation",
+                                                       "score_surface",
+                                                       "accident_count",
+                                                       "suitability_modifier"])
+    else:
+        network = nx.from_pandas_edgelist(df = edges, 
+                                          source = "source", 
+                                          target = "target", 
+                                          edge_attr = ["length", 
+                                                       "length_modified",
+                                                       "score_separation",
+                                                       "score_surface",
+                                                       "suitability_modifier"])
 
+    return edges, network
+    
+    
 def score_routes(
         buildings: gpd.GeoDataFrame,
         dist_list: List[pd.DataFrame],
@@ -359,6 +444,23 @@ def calc_building_scores(
 
     return buildings
 
+def fill_holes_for_vis(edges: gpd.GeoDataFrame(), scoring: gpd.GeoDataFrame())-> gpd.GeoDataFrame():
+    missing_geoms = edges[edges.geometry.isna()]
+    scoring = scoring.to_crs("EPSG:25832")
+    new_geoms = pd.merge(left = missing_geoms,
+                         right = scoring[["id","geometry"]],
+                         how = "left",
+                         left_on = "osmid",
+                         right_on = "id")
+    new_geoms["geometry"] = new_geoms["geometry_y"]
+    new_geoms.drop(columns = ["geometry_y", "geometry_x", "id"])
+    new_geoms = gpd.GeoDataFrame(new_geoms, crs="EPSG:25832")
+    
+    edges = pd.concat([edges[~edges.geometry.isna()], new_geoms])
+    edges = gpd.GeoDataFrame(edges, crs="EPSG:25832")
+    edges = edges[~edges.geometry.isna()]
+    return edges
+
 def export_scores(buildings: gpd.GeoDataFrame,
                   persona_name: str, network: nx.MultiDiGraph,
                   EXPORT_PATH: str):
@@ -401,65 +503,65 @@ def export_scores(buildings: gpd.GeoDataFrame,
     buildings_for_shp.to_file(f'{filepath}/shp/Walk_{persona_name}.shp')
 
 if __name__ == "__main__":
+    # Download OSM network for given city
     network = fetch_network_edges(CITY)
     log.info("Network and it's edges loaded... ")
+    
+    # Convert to dataframe for easier data handling
     edges = nx.to_pandas_edgelist(network)
 
-    buildings = fetch_buildings(CITY, network)
-    log.info("Buildings loaded... ")
-    
+    # Import osm metadata
     import_osm = import_osm()
     scoring, missing_scores = import_osm.score_osm(log, DEFAULT_SCORES)
 
-    length_modified = []
-    scores_separation = []
-    scores_surfaces = []
-    geometries = []
-    for index, edge in edges.iterrows():
-        if isinstance(edge.osmid, list):
-            edge.osmid = edge.osmid
-        else:
-            edge.osmid = [edge.osmid]
-        related_scores = scoring[scoring.id.isin(edge.osmid)]
-        geometries.append(scoring["geometry"])
-        if related_scores.size > 0:
-            score_separation = related_scores.score_separation.mean().round()
-            score_surface = related_scores.score_surface.mean().round()
-            modifier = 1 + \
-                TRANSLATION_FACTORS["separation"][score_separation] + \
-                TRANSLATION_FACTORS["surface"][score_surface]
-            length_modified.append(edge.length * modifier)
-            scores_separation.append(score_separation)
-            scores_surfaces.append(score_surface)
-        else:
-            length_modified.append(9999999)
-            scores_separation.append(0)
-            scores_surfaces.append(0)
-    del edge, index, related_scores, score_separation, score_surface, modifier
-        
-    edges.insert(loc = 8, column = "length_modified", value = length_modified)
-    edges.insert(loc = 8, column = "score_separation", value = scores_separation)
-    edges.insert(loc = 8, column = "score_surface", value = scores_surfaces)
+    # match map- and metadata
+    edges, network = score_network(edges, scoring)
     
-    if USE_ACCIDENTS:
-        accidents = acd.fetch_accidents(path = ACCIDENT_PATH)
-        edges = acd.match_accidents_network(edges, accidents)
-        network = nx.from_pandas_edgelist(df = edges, 
-                                          source = "source", 
-                                          target = "target", 
-                                          edge_attr = ["length", 
-                                                       "length_modified",
-                                                       "score_separation",
-                                                       "score_surface",
-                                                       "accident_count"])
-
-        del length_modified, scores_separation, scores_surfaces
+        
+    edges_for_vis = gpd.GeoDataFrame(edges, crs="EPSG:25832")
+    
+    edges_for_vis = fill_holes_for_vis(edges, scoring)
+        
+    scores_surface = edges_for_vis.explore(column = "score_surface", 
+                                           cmap = "viridis", 
+                                           vmin = 0, 
+                                           vmax = 5)
+        
+    scores_separation = edges_for_vis.explore(column = "score_separation", 
+                                              cmap = "viridis", 
+                                              vmin = 0, 
+                                              vmax = 5)
+    
+    accident_count = edges_for_vis.explore(column = "accident_count",
+                                      cmap = "viridis",
+                                      vmin = 0,
+                                      vmax = 10)
+    
+    score_accident = edges_for_vis.explore(column = "score_accident",
+                                      cmap = "viridis",
+                                      vmin = 0, 
+                                      vmax = 5)
+    
+    suitability_modifier = edges_for_vis.explore(column = "suitability_modifier",
+                                      cmap = "viridis",
+                                      vmin = 1, 
+                                      vmax = 2)
+    
+    scores_surface.save(f"{EXPORT_PATH}/surface.html")
+    scores_separation.save(f"{EXPORT_PATH}/separation.html")
+    accident_count.save(f"{EXPORT_PATH}/accidents.html")
+    score_accident.save(f"{EXPORT_PATH}/accidents_score.html")
+    suitability_modifier.save(f"{EXPORT_PATH}/suitability_modifier.html")
+    
+    # Download OSM buildings chart
+    buildings = fetch_buildings(CITY, network)
+    log.info("Buildings loaded... ")
 
     # scores_surface = scoring.explore(column = "score_surface", 
-    #                                  cmap = "viridis", vmin = 0, 
-    #                                  vmax = 5, 
-    #                                  tooltip = False, 
-    #                                  popup = False)
+    #                                   cmap = "viridis", vmin = 0, 
+    #                                   vmax = 5, 
+    #                                   tooltip = False, 
+    #                                   popup = False)
     
     # scores_separation = scoring.explore(column = "score_separation", 
     #                                     cmap = "viridis", 
@@ -468,24 +570,23 @@ if __name__ == "__main__":
     #                                     tooltip = False, 
     #                                     popup = False)
     
-    # scores_surface.save("surface.html")
-    # scores_separation.save("separation.html")
 
-    for persona_POIs, persona_weight, persona_name in zip(POIS, PERSONA_WEIGHTS, PERSONA_NAMES):
-        log.info(f"Starting calculations for {persona_name}... ")
 
-        POIs = fetch_POIs(CITY, persona_POIs, network)
-        log.info("Points of interest (POIs) loaded... ")
+    # for persona_POIs, persona_weight, persona_name in zip(POIS, PERSONA_WEIGHTS, PERSONA_NAMES):
+    #     log.info(f"Starting calculations for {persona_name}... ")
 
-        dist_list = prepare_scoring(buildings, POIs, network, accidents)
-        log.info("Distances from buildings to POIs calculated... ")
+    #     POIs = fetch_POIs(CITY, persona_POIs, network)
+    #     log.info("Points of interest (POIs) loaded... ")
 
-        score_list = score_routes(buildings, dist_list, persona_weight)
-        log.info("Scores for routes calculated...")
+    #     dist_list = prepare_scoring(buildings, POIs, network, accidents)
+    #     log.info("Distances from buildings to POIs calculated... ")
 
-        buildings = calc_building_scores(
-            buildings, score_list, persona_weight)
-        log.info("Building scores assigned!")
+    #     score_list = score_routes(buildings, dist_list, persona_weight)
+    #     log.info("Scores for routes calculated...")
 
-        export_scores(buildings, persona_name, network, EXPORT_PATH)
-        log.info("Building scores saved!")
+    #     buildings = calc_building_scores(
+    #         buildings, score_list, persona_weight)
+    #     log.info("Building scores assigned!")
+
+    #     export_scores(buildings, persona_name, network, EXPORT_PATH)
+    #     log.info("Building scores saved!")

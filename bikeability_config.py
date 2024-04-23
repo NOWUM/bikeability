@@ -10,9 +10,17 @@ DEFAULT_SCORES = {'separation': 2,
                   'surface': 2,
                   'traffic': 3}
 
-# translation scores to factors
+# translation scores to mathematical modifiers for route score
 
-factors_separation = {5: 0,
+# Weighting different factors for bikeability against each other
+FACTOR_WEIGHTS = {"separation": 2,
+                  "surface": 1,
+                  "traffic": 1,
+                  "accidents": 0.5}
+
+# mathematical impact of different levels of service
+
+factors_separation = {5: 0, # zu enum
                       4: 0.02,
                       3: 0.04,
                       2: 0.06,
@@ -33,11 +41,39 @@ factors_traffic =    {5: 0,
                       1: 0.1,
                       0: 1}
 
+factors_accidents =  {5: 0,
+                      4: 0.02,
+                      3: 0.04,
+                      2: 0.06,
+                      1: 0.1,
+                      0: 1}
+
 TRANSLATION_FACTORS = {"separation": factors_separation,
                        "surface": factors_surface,
-                       "traffic": factors_traffic}
+                       "traffic": factors_traffic,
+                       "accidents": factors_accidents}
 
 MAX_DISTANCE = 2000 #multivariate Optimierung anlesen
+
+pois_model = {
+     "amenity": [
+         "doctors",
+         "cinema",
+         "pharmacy",
+         "bank",
+         "cafe"],
+     "shop": [
+         "supermarket",
+         "bakery"]}
+
+model_weight_factors = {
+    "doctors": [5, 1, 0],
+    "cinema": [2, 0, 0],
+    "pharmacy": [3, 0, 0],
+    "bank": [3, 0, 0],
+    "cafe": [4, 2, 0],
+    "supermarket": [10, 4, 3],
+    "bakery": [5, 1, 0]}
 
 family_pois = {
     "amenity": [

@@ -27,8 +27,14 @@ def fetch_accidents(
 
 def match_accidents_network(edges: pd.DataFrame, accidents: pd.DataFrame):
     edges.insert(10, "accident_count", 0)
+    edges.insert(11, "score_accident", 0)
     edges_geometry = gpd.GeoSeries(edges.geometry).buffer(5, resolution = 16)
     for accident in accidents.geometry:
         edges.loc[edges_geometry.contains(accident), "accident_count"] = edges.loc[edges_geometry.contains(accident), "accident_count"]+1
     
+    edges.loc[edges.accident_count <= 1, "score_accident"] = 5
+    edges.loc[edges.accident_count  > 1, "score_accident"] = 4
+    edges.loc[edges.accident_count  > 2, "score_accident"] = 3
+    edges.loc[edges.accident_count  > 4, "score_accident"] = 2
+    edges.loc[edges.accident_count  > 6, "score_accident"] = 1
     return edges
