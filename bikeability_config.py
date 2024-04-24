@@ -53,6 +53,9 @@ TRANSLATION_FACTORS = {"separation": factors_separation,
                        "traffic": factors_traffic,
                        "accidents": factors_accidents}
 
+# The road types that aren't evaluated
+IGNORED_TYPES =["motorway", "service"]
+
 MAX_DISTANCE = 2000 #multivariate Optimierung anlesen
 
 pois_model = {

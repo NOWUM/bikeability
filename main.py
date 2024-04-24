@@ -9,7 +9,7 @@ from import_osm import import_osm
 from shapely.geometry import Point
 from bikeability_config import ACCIDENT_PATH,EXPORT_PATH, CITY, DEFAULT_SCORES, \
     TRANSLATION_FACTORS, POIS, PERSONA_WEIGHTS, PERSONA_NAMES, MAX_DISTANCE, \
-    USE_ACCIDENTS, FACTOR_WEIGHTS
+    USE_ACCIDENTS, FACTOR_WEIGHTS, IGNORED_TYPES
 import accident_data.accidents_util as acd
 
 # logging
@@ -517,15 +517,15 @@ if __name__ == "__main__":
     # match map- and metadata
     edges, network = score_network(edges, scoring)
     
-        
+    edges = edges[~edges.highway.isin(IGNORED_TYPES)]
     edges_for_vis = gpd.GeoDataFrame(edges, crs="EPSG:25832")
     
     edges_for_vis = fill_holes_for_vis(edges, scoring)
         
     scores_surface = edges_for_vis.explore(column = "score_surface", 
-                                           cmap = "viridis", 
-                                           vmin = 0, 
-                                           vmax = 5)
+                                            cmap = "viridis", 
+                                            vmin = 0, 
+                                            vmax = 5)
         
     scores_separation = edges_for_vis.explore(column = "score_separation", 
                                               cmap = "viridis", 

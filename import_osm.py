@@ -2,6 +2,7 @@ import pandas as pd
 import geopandas as gpd
 import pyrosm
 import logging
+from bikeability_config import IGNORED_TYPES, DEFAULT_SCORES
 
 log = logging.getLogger('Bikeability')
 # test = pyrosm.get_data("Aachen")
@@ -9,9 +10,7 @@ log = logging.getLogger('Bikeability')
 
 # Default values for scoring paths. These values are used when no more specific
 # value can be determined. Useful defaults very for each city. 
-DEFAULT = {'separation': 2,
-           'surface': 2,
-           'traffic': 3}
+
 
 class import_osm():
     def score_route_separation(self, network_osm: pd.DataFrame, scoring: pd.DataFrame):
@@ -84,9 +83,9 @@ class import_osm():
             log.warning(f"{num_missing} elements couldn't be scored for separation. \
                         \n This is most likely due to an unknown exception in the data structure.")
             scoring.loc[scoring["score_separation"] == -1, 
-                    "score_separation"] = DEFAULT['surface']
+                    "score_separation"] = DEFAULT_SCORES['surface']
         
-            log.info(f"Replaced missing separation scores with default value {DEFAULT['separation']}.")
+            log.info(f"Replaced missing separation scores with default value {DEFAULT_SCORES['separation']}.")
         return scoring, missing_scores
     
     def score_route_surfaces(self, network_osm: pd.DataFrame, scoring: pd.DataFrame):
@@ -191,15 +190,15 @@ class import_osm():
         num_unknown = unknown_scores["id"].size
         if num_unknown > 0:
             log.warning(f"{num_unknown} elements couldn't be scored for surface area \
-                        \n due to unknown values. The default value {DEFAULT['surface']} is used.")
+                        \n due to unknown values. The default value {DEFAULT_SCORES['surface']} is used.")
         
         num_missing = missing_scores["id"].size
         if num_missing > 0:
             log.info(f"{num_missing} elements couldn't be scored for surface area \
-                     \n due to insufficient data. The default value {DEFAULT['surface']} is used.")
+                     \n due to insufficient data. The default value {DEFAULT_SCORES['surface']} is used.")
         
         scoring.loc[scoring["score_surface"] == -1, 
-                        "score_surface"] = DEFAULT['surface']
+                        "score_surface"] = DEFAULT_SCORES['surface']
         return scoring, missing_scores
     
     def score_route_traffic(network_osm: pd.DataFrame, scoring: pd.DataFrame):
@@ -224,7 +223,7 @@ class import_osm():
                                    "osm_type", "geometry", "length"]]
     
         # Filter out illegal ways not caught by pyrosm
-        network_osm = network_osm[~network_osm["highway"].isin(["motorway"])]
+        network_osm = network_osm[~network_osm["highway"].isin(IGNORED_TYPES)]
         bicycle_forbidden = ["no", "separate", "private"]
         network_osm = network_osm[~network_osm["bicycle"].isin(bicycle_forbidden)]
         
