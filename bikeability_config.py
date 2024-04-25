@@ -73,7 +73,7 @@ model_weight_factors = {
     "doctors": [5, 1, 0],
     "cinema": [2, 0, 0],
     "pharmacy": [3, 0, 0],
-    "bank": [3, 0, 0],
+    "bank": [2, 0, 0],
     "cafe": [4, 2, 0],
     "supermarket": [10, 4, 3],
     "bakery": [5, 1, 0]}
