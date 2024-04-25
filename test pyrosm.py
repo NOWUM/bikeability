@@ -1,7 +1,9 @@
-import pandas as pd
-import geopandas as gpd
-import pyrosm
 import logging
+
+import geopandas as gpd
+import pandas as pd
+
+import pyrosm
 
 log = logging.getLogger('Bikeability')
 # test = pyrosm.get_data("Aachen")

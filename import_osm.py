@@ -1,8 +1,10 @@
-import pandas as pd
-import geopandas as gpd
-import pyrosm
 import logging
-from bikeability_config import IGNORED_TYPES, DEFAULT_SCORES
+
+import geopandas as gpd
+import pandas as pd
+
+import pyrosm
+from bikeability_config import DEFAULT_SCORES, IGNORED_TYPES
 
 log = logging.getLogger('Bikeability')
 # test = pyrosm.get_data("Aachen")

@@ -1,7 +1,8 @@
-import plotly.express as px
 import geopandas as gpd
-import shapely.geometry
 import numpy as np
+import plotly.express as px
+import shapely.geometry
+
 
 def plot_road_scores(scoring: gpd.GeoDataFrame()):
     lats = []

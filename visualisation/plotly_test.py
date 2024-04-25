@@ -1,7 +1,7 @@
-import plotly.express as px
 import geopandas as gpd
-import shapely.geometry
 import numpy as np
+import plotly.express as px
+import shapely.geometry
 import wget
 
 # download a zipped shapefile
@@ -25,6 +25,7 @@ fig = px.line_geo(lat=lats, lon=lons, hover_name=names)
 fig.show()
 
 from operator import attrgetter
+
 geoms = scoring.geometry.map(attrgetter("geoms"))
 for geom in geoms:
     for linestring in geom:

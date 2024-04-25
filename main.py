@@ -1,16 +1,19 @@
-from typing import Tuple, List # isort anwenden
 import logging
+from typing import List, Tuple
+
+import geopandas as gpd
 import networkx as nx
 import osmnx as ox
-import geopandas as gpd
 import pandas as pd
-import helper
-from import_osm import import_osm
 from shapely.geometry import Point
-from bikeability_config import ACCIDENT_PATH,EXPORT_PATH, CITY, DEFAULT_SCORES, \
-    TRANSLATION_FACTORS, POIS, PERSONA_WEIGHTS, PERSONA_NAMES, MAX_DISTANCE, \
-    USE_ACCIDENTS, FACTOR_WEIGHTS, IGNORED_TYPES
+
 import accident_data.accidents_util as acd
+import helper
+from bikeability_config import (ACCIDENT_PATH, CITY, DEFAULT_SCORES,
+                                EXPORT_PATH, FACTOR_WEIGHTS, IGNORED_TYPES,
+                                MAX_DISTANCE, PERSONA_NAMES, PERSONA_WEIGHTS,
+                                POIS, TRANSLATION_FACTORS, USE_ACCIDENTS)
+from import_osm import import_osm
 
 # logging
 log = logging.getLogger("Bikeability")

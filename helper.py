@@ -5,13 +5,14 @@ Created on Wed Nov 15 12:25:41 2023
 @author: jk2932e
 """
 
-import networkx as nx
-import numpy as np
-import pandas as pd
-import osmnx as ox
-import geopandas as gpd
 import os
 from typing import List
+
+import geopandas as gpd
+import networkx as nx
+import numpy as np
+import osmnx as ox
+import pandas as pd
 
 
 def calc_shortest_path_length(
