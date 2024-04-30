@@ -94,7 +94,7 @@ class suitability():
                 f"Replaced missing separation scores with default value {DEFAULT_SCORES['separation']}.")
         return scoring, missing_scores
 
-    def score_route_surfaces(self, network_osm: pd.DataFrame, scoring: gpd.GeoDataFrame) -> tuple(gpd.GeoDataFrame, gpd.GeoDataFrame):
+    def score_route_surfaces(self, network_osm: pd.DataFrame, scoring: gpd.GeoDataFrame) -> tuple():
         '''
         This function scores osm paths for the surface quality of cycling 
         infrastructure.
@@ -249,7 +249,7 @@ class suitability():
         
         return network_osm
     
-    def score_suitability(edges: pd.DataFrame(), scoring: pd.DataFrame()):
+    def score_suitability(self, edges: pd.DataFrame(), scoring: pd.DataFrame()):
         length_modified = []
         scores_separation = []
         scores_surfaces = []
@@ -334,7 +334,7 @@ class suitability():
 
         return edges, network
     
-    def fill_geometry(edges: gpd.GeoDataFrame(), scoring: gpd.GeoDataFrame())-> gpd.GeoDataFrame():
+    def fill_geometry(self, edges: gpd.GeoDataFrame(), scoring: gpd.GeoDataFrame())-> gpd.GeoDataFrame():
         missing_geoms = edges[edges.geometry.isna()]
         scoring = scoring.to_crs("EPSG:25832")
         new_geoms = pd.merge(left = missing_geoms,
@@ -392,7 +392,7 @@ class suitability():
             network_osm=network_osm,
             scoring=scoring)
         
-        edges, network = self.score_suitability(scoring)
+        edges, network = self.score_suitability(edges = edges, scoring = scoring)
         edges = self.fill_geometry(edges, scoring)
 
         return edges, network

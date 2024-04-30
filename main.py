@@ -8,11 +8,13 @@ import pandas as pd
 from shapely.geometry import Point
 
 import accident_data.accidents_util as acd
+import visualisation as visualisation
 import helper
 from bikeability_config import (ACCIDENT_PATH, CITY, DEFAULT_SCORES,
                                 EXPORT_PATH, FACTOR_WEIGHTS, IGNORED_TYPES,
                                 MAX_DISTANCE, PERSONA_NAMES, PERSONA_WEIGHTS,
-                                POIS, TRANSLATION_FACTORS, USE_ACCIDENTS)
+                                POIS, TRANSLATION_FACTORS, USE_ACCIDENTS,
+                                VISUALIZE)
 from suitability import suitability
 
 # logging
@@ -417,59 +419,15 @@ if __name__ == "__main__":
 
     # calculate suitability
     suitability = suitability()
-    edges, network = suitability.eval_suitability(log, DEFAULT_SCORES)
+    edges, network = suitability.eval_suitability(log, edges, DEFAULT_SCORES)
 
-    edges_for_vis = gpd.GeoDataFrame(edges, crs="EPSG:25832")
-    edges_for_vis = edges_for_vis[~edges_for_vis.geometry.isna()]
-        
-    scores_surface = edges_for_vis.explore(column = "score_surface", 
-                                            cmap = "viridis", 
-                                            vmin = 0, 
-                                            vmax = 5)
-        
-    scores_separation = edges_for_vis.explore(column = "score_separation", 
-                                              cmap = "viridis", 
-                                              vmin = 0, 
-                                              vmax = 5)
-    
-    accident_count = edges_for_vis.explore(column = "accident_count",
-                                      cmap = "viridis",
-                                      vmin = 0,
-                                      vmax = 10)
-    
-    score_accident = edges_for_vis.explore(column = "score_accident",
-                                      cmap = "viridis",
-                                      vmin = 0, 
-                                      vmax = 5)
-    
-    suitability_modifier = edges_for_vis.explore(column = "suitability_modifier",
-                                      cmap = "viridis",
-                                      vmin = 1, 
-                                      vmax = 2)
-    
-    scores_surface.save(f"{EXPORT_PATH}/surface.html")
-    scores_separation.save(f"{EXPORT_PATH}/separation.html")
-    accident_count.save(f"{EXPORT_PATH}/accidents.html")
-    score_accident.save(f"{EXPORT_PATH}/accidents_score.html")
-    suitability_modifier.save(f"{EXPORT_PATH}/suitability_modifier.html")
+    if VISUALIZE:
+        visualisation.vis_suitability(edges)
+
     
     # Download OSM buildings chart  
     buildings = fetch_buildings(CITY, network)
     log.info("Buildings loaded... ")
-
-    # scores_surface = scoring.explore(column = "score_surface", 
-    #                                   cmap = "viridis", vmin = 0, 
-    #                                   vmax = 5, 
-    #                                   tooltip = False, 
-    #                                   popup = False)
-    
-    # scores_separation = scoring.explore(column = "score_separation", 
-    #                                     cmap = "viridis", 
-    #                                     vmin = 0, 
-    #                                     vmax = 5, 
-    #                                     tooltip = False, 
-    #                                     popup = False)
-    
 
 
     # for persona_POIs, persona_weight, persona_name in zip(POIS, PERSONA_WEIGHTS, PERSONA_NAMES):
