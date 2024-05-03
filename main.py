@@ -8,43 +8,15 @@ import pandas as pd
 from shapely.geometry import Point
 
 import accident_data.accidents_util as acd
-import visualisation as visualisation
+import visualisation
 import helper
-from bikeability_config import (ACCIDENT_PATH, CITY, DEFAULT_SCORES,
-                                EXPORT_PATH, FACTOR_WEIGHTS, IGNORED_TYPES,
-                                MAX_DISTANCE, PERSONA_NAMES, PERSONA_WEIGHTS,
-                                POIS, TRANSLATION_FACTORS, USE_ACCIDENTS,
-                                VISUALIZE)
-from suitability import suitability
+from bikeability_config import CONFIG
+from suitability import Suitability
 
 # logging
 log = logging.getLogger("Bikeability")
-logging.basicConfig(
-    filename="bikeability.log",
-    level=logging.INFO,
-    format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
-    datefmt="%d-%m-%Y %H:%M:%S")
 
-
-def fetch_network_edges(
-        city: str) -> tuple[nx.MultiDiGraph, gpd.GeoDataFrame]:
-    """
-    Fetches network and it's edges for given city in EPSG:25832.
-    """
-
-    # get original network
-    network = ox.graph_from_place(city, network_type="bike")
-
-    # fetch the edges
-    # network_edges = ox.graph_to_gdfs(network, nodes=False)
-
-    # convert to EPSG:25832
-    network = ox.project_graph(network, to_crs="EPSG:25832")
-    # network_edges.to_crs("EPSG:25832", inplace=True)
-    return network
-
-
-def fetch_buildings(
+def fetch_and_filter_residences(
         city: str,
         network: nx.MultiDiGraph) -> gpd.GeoDataFrame:
     """
@@ -59,6 +31,8 @@ def fetch_buildings(
 
     # filter out non-polygon geometries
     buildings = buildings[buildings.geometry.type == "Polygon"]
+    
+    buildings = buildings[buildings.building.isin(CONFIG["residential_building_types"])]
 
     # calculate centroids for nearest nodes
     buildings["centroid"] = buildings.centroid
@@ -73,7 +47,7 @@ def fetch_buildings(
     buildings.reset_index(inplace=True)
 
     # filter out everything but geometry, centroid and node
-    return buildings[["osmid", "geometry", "centroid", "node"]]
+    return buildings[["osmid", "geometry", "centroid", "node", "building"]]
 
 
 def fetch_POIs(
@@ -193,7 +167,7 @@ def prepare_scoring(
     dist_list = []
 
     # buffer distance in buildings
-    buildings["geometry"] = buildings["geometry"].buffer(MAX_DISTANCE)
+    buildings["geometry"] = buildings["geometry"].buffer(CONFIG['max_distance'])
 
     # iterate over buildings
     for idx, building_data in buildings.iterrows():
@@ -410,41 +384,39 @@ def export_scores(buildings: gpd.GeoDataFrame,
     buildings_for_shp.to_file(f'{filepath}/shp/Walk_{persona_name}.shp')
 
 if __name__ == "__main__":
-    # Download OSM network for given city
-    network = fetch_network_edges(CITY)
-    log.info("Network and it's edges loaded... ")
+    logging.basicConfig(
+        filename="bikeability.log",
+        level=logging.INFO,
+        format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
+        datefmt="%d-%m-%Y %H:%M:%S")
     
-    # Convert to dataframe for easier data handling
-    edges = nx.to_pandas_edgelist(network)
+    
 
     # calculate suitability
-    suitability = suitability()
-    edges, network = suitability.eval_suitability(log, edges, DEFAULT_SCORES)
-
-    if VISUALIZE:
-        visualisation.vis_suitability(edges)
+    suitability = Suitability()
+    edges, network = suitability.eval_suitability(CONFIG)
+    
+    if CONFIG['visualize']:
+        visualisation.create_suitability_visualisation(edges)
 
     
     # Download OSM buildings chart  
-    buildings = fetch_buildings(CITY, network)
+    residential_buildings = fetch_and_filter_residences(city = CONFIG['city'], network = network)
     log.info("Buildings loaded... ")
 
+    POIs = fetch_POIs(city = CONFIG['city'], 
+                      poi_dict = CONFIG["pois_model"], 
+                      network = network)
+    log.info("Points of interest (POIs) loaded... ")
 
-    # for persona_POIs, persona_weight, persona_name in zip(POIS, PERSONA_WEIGHTS, PERSONA_NAMES):
-    #     log.info(f"Starting calculations for {persona_name}... ")
+    dist_list = prepare_scoring(residential_buildings, POIs, network, accidents)
+    log.info("Distances from buildings to POIs calculated... ")
 
-    #     POIs = fetch_POIs(CITY, persona_POIs, network)
-    #     log.info("Points of interest (POIs) loaded... ")
+    score_list = score_routes(residential_buildings, dist_list, persona_weight)
+    log.info("Scores for routes calculated...")
 
-    #     dist_list = prepare_scoring(buildings, POIs, network, accidents)
-    #     log.info("Distances from buildings to POIs calculated... ")
+    buildings = calc_building_scores(residential_buildings, score_list, persona_weight)
+    log.info("Building scores assigned!")
 
-    #     score_list = score_routes(buildings, dist_list, persona_weight)
-    #     log.info("Scores for routes calculated...")
-
-    #     buildings = calc_building_scores(
-    #         buildings, score_list, persona_weight)
-    #     log.info("Building scores assigned!")
-
-    #     export_scores(buildings, persona_name, network, EXPORT_PATH)
-    #     log.info("Building scores saved!")
+    # export_scores(residential_buildings, persona_name, network, EXPORT_PATH)
+    # log.info("Building scores saved!")

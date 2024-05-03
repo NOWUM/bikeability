@@ -1,4 +1,3 @@
-
 USE_ACCIDENTS = True
 VISUALIZE = True
 ACCIDENT_PATH = "accident_data/accidents_bike.h5"
@@ -59,7 +58,7 @@ IGNORED_TYPES =["motorway", "service"]
 
 MAX_DISTANCE = 2000 #multivariate Optimierung anlesen
 
-pois_model = {
+POIS_MODEL = {
      "amenity": [
          "doctors",
          "cinema",
@@ -70,7 +69,7 @@ pois_model = {
          "supermarket",
          "bakery"]}
 
-model_weight_factors = {
+MODEL_WEIGHT_FACTORS = {
     "doctors": [5, 1, 0],
     "cinema": [2, 0, 0],
     "pharmacy": [3, 0, 0],
@@ -79,89 +78,104 @@ model_weight_factors = {
     "supermarket": [10, 4, 3],
     "bakery": [5, 1, 0]}
 
-family_pois = {
-    "amenity": [
-        "kindergarten",
-        "school",
-        "bus_station",
-        "car_sharing",
-        "pharmacy",
-        "doctors",
-        "cinema"],
-    "shop": [
-        "bakery",
-        "supermarket",
-        "greengrocer"]}
+RESIDENTIAL_BUILDING_TYPES = [
+    "yes",
+    "apartments",
+    "tower",
+    "dormitory",
+    "residential",
+    "detached",
+    "house",
+    "semidetached house",
+    "hotel",
+    "farm",
+    "monastery",
+    "bungalow",
+    "cabin",
+    "static_caravan",
+    "barrack",
+    "ger",
+    "houseboat",
+    "stilt_house",
+    "terrace",
+    "tree_house",
+    "trullo"]
 
-senior_pois = {
-    "amenity": [
-        "cafe",
-        "bus_station",
-        "bank",
-        "pharmacy",
-        "place_of_worship",
-        "doctors",
-        "theatre"],
-    "shop": [
-        "bakery",
-        "supermarket",
-        "butcher"]}
+IGNORE_BUILDING_TYPES = [
+    "bunker",
+    "garage",
+    "hut",
+    "university",
+    "construction",
+    "commercial",
+    "government",
+    "retail",
+    "parking",
+    "church",
+    "grandstand",
+    "farm_auxiliary",
+    "sports_centre",
+    "sports_hall",
+    "school",
+    "office",
+    "industrial",
+    "cathedral",
+    "hospital",
+    "kindergarden",
+    "roof",
+    "kiosk",
+    "garages",
+    "fire_station",
+    "service",
+    "warehouse",
+    "chapel",
+    "public",
+    "bridge",
+    "shed",
+    "carport",
+    "civic",
+    "manufacture",
+    "mosque",
+    "synagogue",
+    "train_station",
+    "college",
+    "greenhouse",
+    "farmyard",
+    "cowshed",
+    "digester",
+    "stable",
+    "ruins",
+    "transportation",
+    "community_centre",
+    "barn",
+    "silo",
+    "allotment_house",
+    "shop",
+    "elevator",
+    "church_tower",
+    "container",
+    "gatehouse",
+    "tent",
+    "storage_tank",
+    "shelter",
+    "wall",
+    "conservatory",
+    "stadium"]
 
-student_pois = {
-    "amenity": [
-        "bar",
-        "cafe",
-        "library",
-        "university",
-        "bus_station",
-        "parcel_locker",
-        "pharmacy",
-        "doctors"],
-    "shop": [
-        "hairdresser",
-        "supermarket"]}
 
-# Weight factors
-familiy_weight_factors = {
-    "kindergarten": [9, 0, 0],
-    "school": [8, 0, 0],
-    "bus_station": [4, 0, 0],
-    "car_sharing": [5, 0, 0],
-    "pharmacy": [6, 0, 0],
-    "doctors": [7, 0, 0],
-    "cinema": [1, 0, 0],
-    "bakery": [3, 0, 0],
-    "supermarket": [10, 0, 0],
-    "greengrocer": [2, 0, 0]}
-
-senior_weight_factors = {
-    "cafe": [5, 0, 0],
-    "bus_station": [2, 0, 0],
-    "bank": [3, 0, 0],
-    "pharmacy": [8, 0, 0],
-    "place_of_worship": [6, 0, 0],
-    "doctors": [10, 0, 0],
-    "theatre": [1, 0, 0],
-    "bakery": [7, 0, 0],
-    "supermarket": [9, 0, 0],
-    "butcher": [4, 0, 0]}
-
-student_weight_factors = {
-    "bar": [4, 0, 0],
-    "cafe": [3, 0, 0],
-    "library": [9, 0, 0],
-    "university": [10, 0, 0],
-    "bus_station": [4, 0, 0],
-    "parcel_locker": [1, 0, 0],
-    "pharmacy": [5, 0, 0],
-    "doctors": [6, 0, 0],
-    "hairdresser": [2, 0, 0],
-    "supermarket": [7, 0, 0]}
-
-POIS = [family_pois, senior_pois, student_pois]
-PERSONA_WEIGHTS = [
-    familiy_weight_factors,
-    senior_weight_factors,
-    student_weight_factors]
-PERSONA_NAMES = ["families", "students", "seniors"]
-
+CONFIG = {
+    "use_accidents": USE_ACCIDENTS,
+    "visualize": VISUALIZE,
+    "accident_path": ACCIDENT_PATH,
+    "export_path": EXPORT_PATH,
+    "city": CITY,
+    "default_scores": DEFAULT_SCORES,
+    "factor_weights": FACTOR_WEIGHTS,
+    "translation_factors": TRANSLATION_FACTORS,
+    "ignored_types": IGNORED_TYPES,
+    "max_distance": MAX_DISTANCE,
+    "pois_model": POIS_MODEL,
+    "model_weight_factors": MODEL_WEIGHT_FACTORS,
+    "residential_building_types": RESIDENTIAL_BUILDING_TYPES,
+    "ignore_building_types": IGNORE_BUILDING_TYPES
+    }

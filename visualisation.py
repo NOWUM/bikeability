@@ -2,7 +2,7 @@ import pandas as pd
 import geopandas as gpd
 from bikeability_config import USE_ACCIDENTS, EXPORT_PATH
 
-def vis_suitability(edges: pd.DataFrame):
+def create_suitability_visualisation(edges: pd.DataFrame):
     edges_for_vis = gpd.GeoDataFrame(edges, crs="EPSG:25832")
     edges_for_vis = edges_for_vis[~edges_for_vis.geometry.isna()]
 
