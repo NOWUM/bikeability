@@ -19,8 +19,9 @@ FACTOR_WEIGHTS = {"separation": 2,
                   "accidents": 0.5}
 
 # mathematical impact of different levels of service
+# The numbers from 5 to 1 are representative of a decreasing level of quality.
 
-factors_separation = {5: 0, # zu enum
+factors_separation = {5: 0, 
                       4: 0.02,
                       3: 0.04,
                       2: 0.06,

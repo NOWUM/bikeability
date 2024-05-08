@@ -224,8 +224,54 @@ class Suitability():
         scoring.loc[scoring["score_surface"] == -1,
                     "score_surface"] = CONFIG['default_scores']['surface']
         return scoring, missing_scores
-
+    
+    def complete_road_related(self, scoring: pd.DataFrame(), score: pd.Series(), score_type: str(), CONFIG: dict(), type_defaults: pd.DataFrame()) -> pd.Series():
+        related_scores = scoring.loc[scoring.name.isin([score["name"]]), f"score_{score_type}"]
+        if related_scores.size >= 1:
+            score[f"score_{score_type}"] = round(related_scores.mean())
+        else:
+            score[f"score_{score_type}"] = type_defaults[score["highway", score_type]]
+        return  score
+    
+    def fill_in_scores(self, scoring: pd.DataFrame(), CONFIG: dict()):
+        scoring_full = scoring
+        
+        highwaytypes = scoring.highway.unique()
+        type_defaults = pd.DataFrame()
+        type_defaults.insert(0, "surface", -1)
+        type_defaults.insert(1, "separation", -1)
+        for highwaytype in highwaytypes:
+            surfaces_of_type = scoring.loc[scoring.highway.isin([highwaytype]), "score_surface"]
+            separation_of_type = scoring.loc[scoring.highway.isin([highwaytype]), "score_separation"]
+            type_defaults.loc[highwaytype, "surface"] = round(surfaces_of_type[surfaces_of_type != -1].mean())
+            type_defaults.loc[highwaytype, "separation"] = round(separation_of_type[surfaces_of_type != -1].mean())
+            
+        for index, score in scoring_full.iterrows():
+            if score.score_surface == -1:
+                score = self.complete_road_related(scoring, score, "surface", CONFIG, type_defaults)
+            if score.score_separation == -1:
+                score = self.complete_road_related(scoring, score, "separation", CONFIG, type_defaults)
+        return scoring_full    
+            
     def import_network(self, osm: pyrosm.OSM, log: logging.Logger, CONFIG: dict) -> pd.DataFrame():
+        """
+        Imports and filters the road network from osm.
+    
+        Parameters
+        ----------
+        osm : pyrosm.OSM
+            Pyrosm OSM reference object.
+        log : logging.Logger
+            Log file.
+        CONFIG: dict
+            Dictionary of configuration options and static variables for bikeability calculation.
+    
+        Returns
+        -------
+        network_osm : pd.DataFrame()
+            Dataframe containing OSM map- and metadata that is relevant for calculating bikeability.
+            
+        """
         network_osm = osm.get_network("cycling")
         log.info("Successfully downloaded osm network data!")
 
@@ -264,7 +310,32 @@ class Suitability():
 
         return network_osm
 
-    def score_suitability(self, edges: pd.DataFrame(), network: nx.MultiDiGraph(), scoring: pd.DataFrame(), CONFIG: dict):
+    def suitability_to_network(self, edges: pd.DataFrame(), network: nx.MultiDiGraph(), scoring: pd.DataFrame(), CONFIG: dict):
+        """
+        Calculates the bicycle suitability scores of a road network by 
+        combining scores for surface quality and separation to an overall score. 
+        
+        If it is enabled in CONFIG, accident data is evaluated as well.
+        
+        Parameters
+        ----------
+        edges : pd.DataFrame()
+            List of edges in the network.
+        network : nx.MultiDiGraph()
+            Complete osm network.
+        scoring : pd.DataFrame()
+            Dataframe containing scoring for the relevant roads.
+        CONFIG : dict
+            Dictionary of configuration options and static variables for bikeability calculation.
+
+        Returns
+        -------
+        edges : pd.DataFrame()
+            List of edges in the network with corresponding suitability scores.
+        network : nx.MultiDiGraph()
+            Road network with added suitability metadata.
+
+        """
         length_modified = []
         scores_separation = []
         scores_surfaces = []
@@ -367,6 +438,22 @@ class Suitability():
         return edges, network
 
     def fill_geometry(self, edges: gpd.GeoDataFrame(), scoring: gpd.GeoDataFrame()) -> gpd.GeoDataFrame():
+        
+        """
+        Fills out missing geometries in the network for later visualisation
+        
+        Parameters
+        ----------
+        edges : pd.DataFrame()
+            List of edges in the network.
+        scoring : pd.DataFrame()
+            Dataframe containing scoring for the relevant roads.
+            
+        Returns
+        -------
+        edges : pd.DataFrame()
+            List of edges in the network with more complete geographic information.
+        """
         missing_geoms = edges[edges.geometry.isna()]
         scoring = scoring.to_crs("EPSG:25832")
         new_geoms = pd.merge(left=missing_geoms,
@@ -385,6 +472,7 @@ class Suitability():
 
     def eval_suitability(self, CONFIG: dict):
         """
+        Downloads a road network for a specified city and scores it for
         
 
         Parameters
@@ -419,7 +507,7 @@ class Suitability():
         network_osm = self.import_network(osm, log, CONFIG)
 
         # initialise scoring dataframe
-        scoring = network_osm[["name", "id", "tags", "osm_type", "geometry",
+        scoring = network_osm[["name", "id", "tags", "osm_type", "highway", "geometry",
                                "length"]]
 
         log.info("Starting to score for separation!")
@@ -435,7 +523,9 @@ class Suitability():
             scoring=scoring,
             CONFIG=CONFIG)
 
-        edges, network = self.score_suitability(
+        scoring = self.fill_in_scores(scoring, CONFIG)
+        
+        edges, network = self.suitability_to_network(
             edges, network, scoring, CONFIG)
         edges = self.fill_geometry(edges, scoring)
 
