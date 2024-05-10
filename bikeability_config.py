@@ -1,3 +1,5 @@
+import pandas as pd
+
 USE_ACCIDENTS = True
 VISUALIZE = True
 ACCIDENT_PATH = "accident_data/accidents_bike.h5"
@@ -65,19 +67,45 @@ POIS_MODEL = {
          "cinema",
          "pharmacy",
          "bank",
-         "cafe"],
+         "cafe",
+         "bar",
+         "restaurant",
+         "university",
+         "school"],
      "shop": [
          "supermarket",
          "bakery"]}
 
+WEIGHT_FACTORS_CATEGORIES = {
+    "education": ["university", "school"],
+    "doctors": ["doctors", "dentist", "clinic"],
+    "entertainment": ["cinema", "music_venue", "stage", "nightclub", "theatre"],
+    "pharmacy": ["pharmacy"],
+    "financial": ["bank", "atm"],
+    "sustenance": ["cafe", "bar", "restaurant"],
+    "supermarket": ["supermarket"],
+    "food_shop": ["bakery", "butcher", "cheese", "greengrocer", "deli"]}
+
 MODEL_WEIGHT_FACTORS = {
+    "education": [6, 0, 0],
     "doctors": [5, 1, 0],
-    "cinema": [2, 0, 0],
-    "pharmacy": [3, 0, 0],
-    "bank": [2, 0, 0],
-    "cafe": [4, 2, 0],
-    "supermarket": [10, 4, 3],
+    "entertainment": [2, 0, 0],
+    "pharmacy": [2, 0, 0],
+    "financial": [2, 0, 0],
+    "sustenance": [4, 2, 0],
+    "supermarket": [8, 4, 1],
     "bakery": [5, 1, 0]}
+
+POIS_MODEL = {
+    "amenity": 
+        WEIGHT_FACTORS_CATEGORIES["education"] +
+        WEIGHT_FACTORS_CATEGORIES["doctors"] +
+        WEIGHT_FACTORS_CATEGORIES["pharmacy"] +
+        WEIGHT_FACTORS_CATEGORIES["financial"] +
+        WEIGHT_FACTORS_CATEGORIES["sustenance"],
+    "shop":
+        WEIGHT_FACTORS_CATEGORIES["supermarket"] +
+        WEIGHT_FACTORS_CATEGORIES["food_shop"]}
 
 RESIDENTIAL_BUILDING_TYPES = [
     "yes",
