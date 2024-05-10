@@ -310,7 +310,7 @@ class Suitability():
 
         return network_osm
 
-    def suitability_to_network(self, edges: pd.DataFrame(), network: nx.MultiDiGraph(), scoring: pd.DataFrame(), CONFIG: dict):
+    def suitability_to_network(self, nodes: gpd.GeoDataFrame(), edges: gpd.GeoDataFrame(), network: nx.MultiDiGraph(), scoring: pd.DataFrame(), CONFIG: dict):
         """
         Calculates the bicycle suitability scores of a road network by 
         combining scores for surface quality and separation to an overall score. 
@@ -400,41 +400,30 @@ class Suitability():
         edges.insert(loc=8, column="score_separation", value=scores_separation)
         edges.insert(loc=8, column="score_surface", value=scores_surfaces)
         edges.insert(loc=8, column="suitability_modifier", value=modifiers)
-
-        edges_import = edges[["source",
-                              "target",
-                              "length",
-                              "length_modified",
-                              "score_separation",
-                              "score_surface",
-                              "accident_count",
-                              "suitability_modifier"]]
-        edges_import.set_index(["source", "target"], inplace=True)
-        edges_import = edges_import.T
-        dict4network = edges_import.to_dict()
-
-        if CONFIG['use_accidents']:
-            network = nx.from_pandas_edgelist(df=edges,
-                                              source="source",
-                                              target="target",
-                                              edge_attr=["length",
-                                                         "length_modified",
-                                                         "score_separation",
-                                                         "score_surface",
-                                                         "accident_count",
-                                                         "suitability_modifier"],
-                                              create_using=nx.MultiDiGraph())
-        else:
-            network = nx.from_pandas_edgelist(df=edges,
-                                              source="source",
-                                              target="target",
-                                              edge_attr=["length",
-                                                         "length_modified",
-                                                         "score_separation",
-                                                         "score_surface",
-                                                         "suitability_modifier"],
-                                              create_using=nx.MultiDiGraph())
-
+        
+        network = ox.graph_from_gdfs(nodes, edges)
+        # if CONFIG['use_accidents']:
+        #     network = nx.from_pandas_edgelist(df=edges,
+        #                                       source="source",
+        #                                       target="target",
+        #                                       edge_attr=["length",
+        #                                                  "length_modified",
+        #                                                  "score_separation",
+        #                                                  "score_surface",
+        #                                                  "accident_count",
+        #                                                  "suitability_modifier"],
+        #                                       create_using=nx.MultiDiGraph())
+        # else:
+        #     network = nx.from_pandas_edgelist(df=edges,
+        #                                       source="source",
+        #                                       target="target",
+        #                                       edge_attr=["length",
+        #                                                  "length_modified",
+        #                                                  "score_separation",
+        #                                                  "score_surface",
+        #                                                  "suitability_modifier"],
+        #                                       create_using=nx.MultiDiGraph())
+        network = ox.project_graph(network, to_crs="EPSG:25832")
         return edges, network
 
     def fill_geometry(self, edges: gpd.GeoDataFrame(), scoring: gpd.GeoDataFrame()) -> gpd.GeoDataFrame():
@@ -498,7 +487,8 @@ class Suitability():
 
         # Convert to dataframe for easier data handling
         # network direkt suitability übergeben
-        edges = nx.to_pandas_edgelist(network)
+        nodes, edges = ox.graph_to_gdfs(network)
+        edges = edges[~edges.highway.isin(CONFIG["ignored_types"])]
 
         fp = "C:\\Users\\jk2932e\\Python Projects\\bikeability\\pyrosm\\Aachen.osm.pbf"
         osm = pyrosm.OSM(fp)
@@ -525,7 +515,7 @@ class Suitability():
 
         scoring = self.fill_in_scores(scoring, CONFIG)
         
-        edges, network = self.suitability_to_network(
+        edges, network = self.suitability_to_network(nodes,
             edges, network, scoring, CONFIG)
         edges = self.fill_geometry(edges, scoring)
 
