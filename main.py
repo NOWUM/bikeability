@@ -138,12 +138,10 @@ def path_to_projection(
 def prepare_scoring(
         buildings: gpd.GeoDataFrame,
         POIs: gpd.GeoDataFrame,
-        network: nx.MultiDiGraph,
-        accidents: pd.DataFrame) -> List[pd.DataFrame]:
+        network: nx.MultiDiGraph) -> List[pd.DataFrame]:
     """
     Prepares the consecutive scoring of buildings by calculating weighted 
-    scores for all routes between the listed buildings and relevant POIs and 
-    counting the number of accidents in each given path.
+    scores for all routes between the listed buildings and relevant POIs.
 
     Parameters
     ----------
@@ -153,14 +151,12 @@ def prepare_scoring(
         List of points of interest.
     network : nx.MultiDiGraph
         Node-Edge-Network of the relevant area.
-    accidents : pd.DataFrame
-        List of geocoded accidents concerning pedestrians in the relevant area.
 
     Returns
     -------
     dist_list : List(pd.DataFrame)
         List of distances for each relevant route in the specified buildings
-        table. Also includes the number of accidents on each route.
+        table.
     """
 
     # empty list to store DFs with distances in
@@ -182,30 +178,6 @@ def prepare_scoring(
                 args=(building_data["node"], network, ))
         POIs_within.reset_index(inplace=True)
 
-        # calculate accidents on the paths to each POI
-        paths = \
-            POIs_within["node"].apply(
-                helper.calc_shortest_path,
-                args=(building_data["node"], network, ))
-
-        # empty list of numbers of accidents on each route for this building
-        accident_counts = []
-
-        # iterate over routes for this building
-        for path in paths:
-            # re-project the geometry of paths to an area
-            projection = path_to_projection(path, network)
-            if projection:
-                # find accidents within the area of the path
-                intersections = accidents["geometry"].apply(
-                    lambda x: x.intersects(projection))
-                # count accidents in the path and append it to distant list
-                accident_counts.append(
-                    len(intersections[intersections == True]))
-            else:
-                # if no path exists, zero accidents are appended
-                accident_counts.append(0)
-
         # build dataframe from the new information
         route_poi = pd.DataFrame({
             "building_osmid": [building_data["osmid"]] * len(POIs_within),
@@ -213,8 +185,7 @@ def prepare_scoring(
             "node_2": POIs_within["node"].copy(),
             "POI_osmid": POIs_within["osmid"].copy(),
             "POI_type": POIs_within["POI_type"].copy(),
-            "dist": POIs_within["dist"].copy(),
-            "accident_count": accident_counts})
+            "dist": POIs_within["dist"].copy()})
 
         dist_list.append(route_poi)
 
@@ -409,13 +380,13 @@ if __name__ == "__main__":
                       network = network)
     log.info("Points of interest (POIs) loaded... ")
 
-    dist_list = prepare_scoring(residential_buildings, POIs, network, accidents)
+    dist_list = prepare_scoring(residential_buildings, POIs, network)
     log.info("Distances from buildings to POIs calculated... ")
 
-    score_list = score_routes(residential_buildings, dist_list, persona_weight)
+    score_list = score_routes(residential_buildings, dist_list, CONFIG["model_weight_factors"])
     log.info("Scores for routes calculated...")
 
-    buildings = calc_building_scores(residential_buildings, score_list, persona_weight)
+    buildings = calc_building_scores(residential_buildings, score_list, CONFIG["model_weight_factors"])
     log.info("Building scores assigned!")
 
     # export_scores(residential_buildings, persona_name, network, EXPORT_PATH)

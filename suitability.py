@@ -319,7 +319,9 @@ class Suitability():
         
         Parameters
         ----------
-        edges : pd.DataFrame()
+        nodes : gpd.GeoDataFrame()
+            List of nodes in the network.
+        edges : gpd.GeoDataFrame()
             List of edges in the network.
         network : nx.MultiDiGraph()
             Complete osm network.
@@ -517,6 +519,6 @@ class Suitability():
         
         edges, network = self.suitability_to_network(nodes,
             edges, network, scoring, CONFIG)
-        edges = self.fill_geometry(edges, scoring)
+        # edges = self.fill_geometry(edges, scoring)
 
         return edges, network

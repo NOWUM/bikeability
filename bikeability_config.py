@@ -59,7 +59,8 @@ TRANSLATION_FACTORS = {"separation": factors_separation,
 # The road types that aren't evaluated
 IGNORED_TYPES =["motorway", "service"]
 
-MAX_DISTANCE = 2000 #multivariate Optimierung anlesen
+# Maximum distance for bike travel. POIs outside this distance aren't considered for calculation.
+MAX_DISTANCE = 3000 
 
 POIS_MODEL = {
      "amenity": [
@@ -100,6 +101,7 @@ POIS_MODEL = {
     "amenity": 
         WEIGHT_FACTORS_CATEGORIES["education"] +
         WEIGHT_FACTORS_CATEGORIES["doctors"] +
+        WEIGHT_FACTORS_CATEGORIES["entertainment"] +
         WEIGHT_FACTORS_CATEGORIES["pharmacy"] +
         WEIGHT_FACTORS_CATEGORIES["financial"] +
         WEIGHT_FACTORS_CATEGORIES["sustenance"],
@@ -204,6 +206,7 @@ CONFIG = {
     "ignored_types": IGNORED_TYPES,
     "max_distance": MAX_DISTANCE,
     "pois_model": POIS_MODEL,
+    "weight_factors_categories": WEIGHT_FACTORS_CATEGORIES,
     "model_weight_factors": MODEL_WEIGHT_FACTORS,
     "residential_building_types": RESIDENTIAL_BUILDING_TYPES,
     "ignore_building_types": IGNORE_BUILDING_TYPES

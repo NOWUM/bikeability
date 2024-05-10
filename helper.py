@@ -23,11 +23,15 @@ def calc_shortest_path_length(
     Calculates the length in metres of the shortest path between two points in the
     network.
     """
-    return nx.shortest_path_length(
-        G=network,
-        source=start_node,
-        target=end_node,
-        weight="length")
+    
+    if nx.has_path(G = network, source=start_node, target=end_node):
+        return nx.shortest_path_length(
+            G=network,
+            source=start_node,
+            target=end_node,
+            weight="length")
+    else:
+        return 99999999
 
 
 def calc_shortest_path(
