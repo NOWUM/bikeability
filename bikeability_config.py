@@ -95,7 +95,8 @@ MODEL_WEIGHT_FACTORS = {
     "financial": [2, 0, 0],
     "sustenance": [4, 2, 0],
     "supermarket": [8, 4, 1],
-    "bakery": [5, 1, 0]}
+    "bakery": [5, 1, 0],
+    "office": [8, 4, 1]}
 
 POIS_MODEL = {
     "amenity": 
@@ -107,7 +108,8 @@ POIS_MODEL = {
         WEIGHT_FACTORS_CATEGORIES["sustenance"],
     "shop":
         WEIGHT_FACTORS_CATEGORIES["supermarket"] +
-        WEIGHT_FACTORS_CATEGORIES["food_shop"]}
+        WEIGHT_FACTORS_CATEGORIES["food_shop"],
+    "office": True}
 
 RESIDENTIAL_BUILDING_TYPES = [
     "yes",

@@ -24,6 +24,13 @@ def calc_shortest_path_length(
     network.
     """
     
+    
+    # return nx.shortest_path_length(
+    #     G=network,
+    #     source=start_node,
+    #     target=end_node,
+    #     weight="length")
+
     if nx.has_path(G = network, source=start_node, target=end_node):
         return nx.shortest_path_length(
             G=network,

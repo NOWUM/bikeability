@@ -22,7 +22,7 @@ def fetch_and_filter_residences(
     """
     Fetches buildings and calculates nearest node for each building for given city in EPSG:25832.
     """
-
+    categories = CONFIG["WEIGHT_FACTORS_CATEGORIES"]
     # load buildings
     buildings = ox.features_from_place(city, {"building": True})
 
@@ -163,8 +163,13 @@ def prepare_scoring(
     dist_list = []
 
     # buffer distance in buildings
-    buildings["geometry"] = buildings["geometry"].buffer(CONFIG['max_distance'])
+    max_distances = [400, 800, 1200, 1600, 2000]
+    buffer_circles = []
+    for max_distance in max_distances:
+        buffer_circles.append(buildings["geometry"].buffer(max_distance))
 
+    categories = CONFIG["weight_factors_categories"]
+    
     # iterate over buildings
     for idx, building_data in buildings.iterrows():
 

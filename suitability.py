@@ -426,6 +426,8 @@ class Suitability():
         #                                                  "suitability_modifier"],
         #                                       create_using=nx.MultiDiGraph())
         network = ox.project_graph(network, to_crs="EPSG:25832")
+        
+        network.remove_nodes_from(list(nx.isolates(network)))
         return edges, network
 
     def fill_geometry(self, edges: gpd.GeoDataFrame(), scoring: gpd.GeoDataFrame()) -> gpd.GeoDataFrame():
