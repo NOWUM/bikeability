@@ -77,7 +77,7 @@ def fetch_POIs(
     pois["name"].fillna("No name", inplace=True)
 
     # POI is mix of amenity and shop
-    pois["POI_type"] = pois["amenity"].fillna(pois["shop"])
+    pois["POI_type"] = pois["amenity"].fillna(pois["shop"].fillna("office"))
 
     # resetting index
     pois.reset_index(inplace=True)
