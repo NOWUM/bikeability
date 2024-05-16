@@ -22,7 +22,6 @@ def fetch_and_filter_residences(
     """
     Fetches buildings and calculates nearest node for each building for given city in EPSG:25832.
     """
-    categories = CONFIG["WEIGHT_FACTORS_CATEGORIES"]
     # load buildings
     buildings = ox.features_from_place(city, {"building": True})
 
@@ -159,42 +158,65 @@ def prepare_scoring(
         table.
     """
 
-    # empty list to store DFs with distances in
-    dist_list = []
-
-    # buffer distance in buildings
-    max_distances = [400, 800, 1200, 1600, 2000]
-    buffer_circles = []
+    # Ranges in which POIs are found
+    max_distances = [400, 800, 1200, 2000, 3000]
+    # The required number of POIs per category before the range is extended
+    required_POIs = 5
     for max_distance in max_distances:
-        buffer_circles.append(buildings["geometry"].buffer(max_distance))
+        # buildings.insert(5, f"buffer_{max_distance}", buildings["geometry"].buffer(max_distance))
+        POIs.insert(5, f"buffer_{max_distance}", POIs["centroid"].buffer(max_distance))
+    
 
     categories = CONFIG["weight_factors_categories"]
     
-    # iterate over buildings
-    for idx, building_data in buildings.iterrows():
-
-        # get POIs within geometry of buildings
-        POIs_within = POIs[POIs.within(building_data["geometry"])]
-
-        # calculate distance for this building to each POI
-        POIs_within["dist"] = \
-            POIs_within["node"].apply(
+    
+    for category in categories:
+        # buildings.insert(5, f"POIs_{category}", pd.DataFrame())
+        POIs_category = POIs[POIs.POI_type.isin(categories[category])]
+        # buildings_POIs_category = pd.Series(name = f"POIs_{category}")
+        weighted_distances = pd.Series(name = f"weighted_distances_{category}")
+        for ids, building in buildings.iterrows():
+            for max_distance in max_distances:
+                POIs_within = POIs_category[building["centroid"].within(POIs_category[f"buffer_{max_distance}"])]
+                if len(POIs_within.index) >= required_POIs:
+                    break
+            weighted_distances[ids] = POIs_within.node.apply(
                 helper.calc_shortest_path_length,
-                args=(building_data["node"], network, ))
-        POIs_within.reset_index(inplace=True)
+                args=(building["node"], network, ))
+            # buildings_POIs_category[ids] = POIs_within
+            del POIs_within
+        buildings = buildings.join(weighted_distances)
+        
+    return buildings
+        
+    
+                
+    # # iterate over buildings
+    # POIs_within = []
+    # for idx, building_data in buildings.iterrows():
 
-        # build dataframe from the new information
-        route_poi = pd.DataFrame({
-            "building_osmid": [building_data["osmid"]] * len(POIs_within),
-            "node_1": [building_data["node"]] * len(POIs_within),
-            "node_2": POIs_within["node"].copy(),
-            "POI_osmid": POIs_within["osmid"].copy(),
-            "POI_type": POIs_within["POI_type"].copy(),
-            "dist": POIs_within["dist"].copy()})
+    #     # get POIs within geometry of buildings
+    #     POIs_within = POIs[POIs.within(building_data["buffer_800"])]
 
-        dist_list.append(route_poi)
+    #     # calculate distance for this building to each POI
+    #     POIs_within["dist"] = \
+    #         POIs_within["node"].apply(
+    #             helper.calc_shortest_path_length,
+    #             args=(building_data["node"], network, ))
+    #     POIs_within.reset_index(inplace=True)
 
-    return dist_list
+    #     # build dataframe from the new information
+    #     route_poi = pd.DataFrame({
+    #         "building_osmid": [building_data["osmid"]] * len(POIs_within),
+    #         "node_1": [building_data["node"]] * len(POIs_within),
+    #         "node_2": POIs_within["node"].copy(),
+    #         "POI_osmid": POIs_within["osmid"].copy(),
+    #         "POI_type": POIs_within["POI_type"].copy(),
+    #         "dist": POIs_within["dist"].copy()})
+
+    #     dist_list.append(route_poi)
+
+    # return dist_list
 
 
     
@@ -385,8 +407,9 @@ if __name__ == "__main__":
                       network = network)
     log.info("Points of interest (POIs) loaded... ")
 
-    dist_list = prepare_scoring(residential_buildings, POIs, network)
+    dist_list = prepare_scoring(residential_buildings[1:100], POIs, network)
     log.info("Distances from buildings to POIs calculated... ")
+    
 
     score_list = score_routes(residential_buildings, dist_list, CONFIG["model_weight_factors"])
     log.info("Scores for routes calculated...")
