@@ -56,29 +56,13 @@ def calc_shortest_path(
         weight="length")
 
 
-def sigmoid(x: np.array) -> np.array:
-    """
-    Function for transforming values using a distance decay function.
-
-    Parameters
-    ----------
-    x : np.array
-        Array of values to apply the sigmoid function to.
-
-    Returns
-    -------
-    result : np.array
-        Array of values according to distance decay.
-
-    """
-    x = 0.000621371*x  # Umrechnung in Meilen
-    result = -1.80644093e+02 * x**5 + 5.91165958e+02 * x**4 - 5.33162397e+02 * \
-        x**3 + 3.33386213e+0 * x**2 - 9.41291973e-02 * x + 1.02061531e+02
-    result[result > 100] = 100
-    result[result < 0] = 0
-    return result
-
-
+def sigmoid(x):
+    midpoint = 4000
+    angle = 0.0015
+    scale = 1
+    y = scale / (scale + np.exp(angle*(x-midpoint)))
+    return y
+             
 def calc_score(
         route_distance: List[float],
         weight_factor: List[int]) -> np.array:
@@ -103,7 +87,7 @@ def calc_score(
     route_distance = np.array(route_distance)
     weight_factor = np.array(weight_factor)
 
-    score = np.outer(sigmoid(route_distance), weight_factor)
+    score = np.multiply(sigmoid(route_distance), weight_factor)
     return score
 
 

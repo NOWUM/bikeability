@@ -365,7 +365,8 @@ class Suitability():
                 transation_factors = CONFIG['translation_factors']
                 score_separation = related_scores.score_separation.mean().round()
                 score_surface = related_scores.score_surface.mean().round()
-                score_accident = edge.score_accident
+                if CONFIG['use_accidents']:
+                    score_accident = edge.score_accident
                 # Scale weight factors so they always accord to the same scaling
                 factor_separation = factor_weights["separation"]
                 factor_surface = factor_weights["surface"]

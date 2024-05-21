@@ -183,6 +183,7 @@ def prepare_scoring(
             weighted_distances[ids] = POIs_within.node.apply(
                 helper.calc_shortest_path_length,
                 args=(building["node"], network, ))
+            weighted_distances[ids] = weighted_distances[ids].nsmallest(3)
             # buildings_POIs_category[ids] = POIs_within
             del POIs_within
         buildings = buildings.join(weighted_distances)
@@ -247,36 +248,59 @@ def score_routes(
 
     score_list = []
 
-    # Iterate over buildings
-    for building in dist_list:
-        route_scores = pd.DataFrame()
-        walk_scores = pd.DataFrame()
-        # Calculate a factor for the number of accidents on the route
-        accident_modifier = helper.accident_score(building["accident_count"])
-
-        # Iterate over POI types
-        for POI_type, weight_factor in group_weight_factor.items():
+    for POI_type, weight_factor in group_weight_factor.items():
+        scores = pd.Series(name = f"scores_{POI_type}")
+        for building_index, building in dist_list.iterrows():
+            weighted_distances = building[f"weighted_distances_{POI_type}"].to_list()
+            
+            len_distances = len(weighted_distances)
+            len_weights = len(weight_factor)
+            if len_distances > len_weights:
+                weighted_distances = weighted_distances[0:len_weights]
+            elif len_weights > len_distances:
+                weight_factor = weight_factor[0:len_distances]
+            
             score = helper.calc_score(
-                route_distance=building[building["POI_type"]
-                                        == POI_type]["dist"],
+                route_distance=weighted_distances,
                 weight_factor=weight_factor)
+            scores[building_index] = score
+            
+        buildings = buildings.join(scores)
+        del scores            
 
-            tmp_df = helper.format_score(weight_factor,
-                                         score,
-                                         building.loc[building["POI_type"] == POI_type].index)
 
-            walk_scores = pd.concat([walk_scores, tmp_df], axis='index')
 
-        # Modify the scores with the accident factors
-        walk_scores = walk_scores.multiply(other=accident_modifier,
-                                           axis="index")
-        # Re-Combine the scores with the building dataframe
-        route_scores = pd.concat([building, walk_scores], axis='columns')
-        # Remove zero-columns
-        route_scores = route_scores.loc[:, (route_scores != 0).any(axis=0)]
-        score_list.append(route_scores)
+    # # Iterate over buildings
+    # scores = pd.Series(name = f"scores_{category}")
+    # for building_index, building in dist_list.iterrows():
+    #     route_scores = pd.DataFrame()
+    #     walk_scores = pd.DataFrame()
+    #     # Calculate a factor for the number of accidents on the route
+    #     # Iterate over POI types
+    #     for POI_type, weight_factor in group_weight_factor.items():
+    #         num_POIs = building[f"weighted_distances_{POI_type}"].size
+    #         weighted_distances = building[f"weighted_distances_{POI_type}"].to_list()
+    #         scores = helper.calc_score(
+    #             route_distance=weighted_distances,
+    #             weight_factor=weight_factor)
+
+
+    #             tmp_df = pd.DataFrame()
+    #             tmp_df = helper.format_score(weight_factor,
+    #                                           score,
+    #                                           building.loc[building["POI_type"] == POI_type].index)
+    
+    #             walk_scores = pd.concat([walk_scores, tmp_df], axis='index')
+
+    #     # Modify the scores with the accident factors
+    #     # Re-Combine the scores with the building dataframe
+    #     route_scores = pd.concat([building, walk_scores], axis='columns')
+    #     # Remove zero-columns
+    #     route_scores = route_scores.loc[:, (route_scores != 0).any(axis=0)]
+    #     score_list.append(route_scores)
 
     return score_list
+
 
 
 def calc_building_scores(

@@ -1,6 +1,5 @@
 *.pbf
 *.log
-*.h5
 *.csv
 *.spyproject
 *.html

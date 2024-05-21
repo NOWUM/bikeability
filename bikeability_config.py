@@ -1,6 +1,6 @@
 import pandas as pd
 
-USE_ACCIDENTS = True
+USE_ACCIDENTS = False
 VISUALIZE = False
 ACCIDENT_PATH = "accident_data/accidents_bike.h5"
 EXPORT_PATH = "results"
@@ -62,20 +62,6 @@ IGNORED_TYPES =["motorway", "service"]
 # Maximum distance for bike travel. POIs outside this distance aren't considered for calculation.
 MAX_DISTANCE = 3000 
 
-POIS_MODEL = {
-     "amenity": [
-         "doctors",
-         "cinema",
-         "pharmacy",
-         "bank",
-         "cafe",
-         "bar",
-         "restaurant",
-         "university",
-         "school"],
-     "shop": [
-         "supermarket",
-         "bakery"]}
 
 WEIGHT_FACTORS_CATEGORIES = {
     "education": ["university", "school"],
@@ -85,7 +71,8 @@ WEIGHT_FACTORS_CATEGORIES = {
     "financial": ["bank", "atm"],
     "sustenance": ["cafe", "bar", "restaurant"],
     "supermarket": ["supermarket"],
-    "food_shop": ["bakery", "butcher", "cheese", "greengrocer", "deli"]}
+    "food_shop": ["bakery", "butcher", "cheese", "greengrocer", "deli"],
+    "office": ["office"]}
 
 MODEL_WEIGHT_FACTORS = {
     "education": [6, 0, 0],
@@ -95,7 +82,7 @@ MODEL_WEIGHT_FACTORS = {
     "financial": [2, 0, 0],
     "sustenance": [4, 2, 0],
     "supermarket": [8, 4, 1],
-    "bakery": [5, 1, 0],
+    "food_shop": [5, 1, 0],
     "office": [8, 4, 1]}
 
 POIS_MODEL = {
