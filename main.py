@@ -189,43 +189,11 @@ def prepare_scoring(
         buildings = buildings.join(weighted_distances)
         
     return buildings
-        
-    
-                
-    # # iterate over buildings
-    # POIs_within = []
-    # for idx, building_data in buildings.iterrows():
-
-    #     # get POIs within geometry of buildings
-    #     POIs_within = POIs[POIs.within(building_data["buffer_800"])]
-
-    #     # calculate distance for this building to each POI
-    #     POIs_within["dist"] = \
-    #         POIs_within["node"].apply(
-    #             helper.calc_shortest_path_length,
-    #             args=(building_data["node"], network, ))
-    #     POIs_within.reset_index(inplace=True)
-
-    #     # build dataframe from the new information
-    #     route_poi = pd.DataFrame({
-    #         "building_osmid": [building_data["osmid"]] * len(POIs_within),
-    #         "node_1": [building_data["node"]] * len(POIs_within),
-    #         "node_2": POIs_within["node"].copy(),
-    #         "POI_osmid": POIs_within["osmid"].copy(),
-    #         "POI_type": POIs_within["POI_type"].copy(),
-    #         "dist": POIs_within["dist"].copy()})
-
-    #     dist_list.append(route_poi)
-
-    # return dist_list
-
-
-    
     
 def score_routes(
         buildings: gpd.GeoDataFrame,
         dist_list: List[pd.DataFrame],
-        group_weight_factor: dict) -> List[pd.DataFrame]:
+        CONFIG: dict) -> List[pd.DataFrame]:
     """
     Function to calculate walk scores for a list of dataframes.
 
@@ -236,8 +204,8 @@ def score_routes(
     dist_list : List[pd.DataFrame]
         List of dataframes containing routes to all relevant POIs for one
         specific building.
-    group_weight_factor : dict
-        Weight factors for specific POIs.
+    CONFIG : dict
+        Bikeability configuration.
 
     Returns
     -------
@@ -246,9 +214,9 @@ def score_routes(
         containing scores for each of the routes.
     """
 
-    score_list = []
+    weight_factors = CONFIG["model_weight_factors"]
 
-    for POI_type, weight_factor in group_weight_factor.items():
+    for POI_type, weight_factor in weight_factors.items():
         scores = pd.Series(name = f"scores_{POI_type}")
         for building_index, building in dist_list.iterrows():
             weighted_distances = building[f"weighted_distances_{POI_type}"].to_list()
@@ -267,46 +235,14 @@ def score_routes(
             
         buildings = buildings.join(scores)
         del scores            
-
-
-
-    # # Iterate over buildings
-    # scores = pd.Series(name = f"scores_{category}")
-    # for building_index, building in dist_list.iterrows():
-    #     route_scores = pd.DataFrame()
-    #     walk_scores = pd.DataFrame()
-    #     # Calculate a factor for the number of accidents on the route
-    #     # Iterate over POI types
-    #     for POI_type, weight_factor in group_weight_factor.items():
-    #         num_POIs = building[f"weighted_distances_{POI_type}"].size
-    #         weighted_distances = building[f"weighted_distances_{POI_type}"].to_list()
-    #         scores = helper.calc_score(
-    #             route_distance=weighted_distances,
-    #             weight_factor=weight_factor)
-
-
-    #             tmp_df = pd.DataFrame()
-    #             tmp_df = helper.format_score(weight_factor,
-    #                                           score,
-    #                                           building.loc[building["POI_type"] == POI_type].index)
-    
-    #             walk_scores = pd.concat([walk_scores, tmp_df], axis='index')
-
-    #     # Modify the scores with the accident factors
-    #     # Re-Combine the scores with the building dataframe
-    #     route_scores = pd.concat([building, walk_scores], axis='columns')
-    #     # Remove zero-columns
-    #     route_scores = route_scores.loc[:, (route_scores != 0).any(axis=0)]
-    #     score_list.append(route_scores)
-
-    return score_list
+    return buildings
 
 
 
 def calc_building_scores(
         buildings: gpd.GeoDataFrame,
         score_list: List[pd.DataFrame],
-        group_weight_factor: dict) -> gpd.GeoDataFrame:
+        CONFIG: dict) -> gpd.GeoDataFrame:
     """
 
 
@@ -317,18 +253,19 @@ def calc_building_scores(
     score_list : List[pd.DataFrame]
         List of dataframes containing scored routes to all relevant POIs for 
         one specific building.
-    group_weight_factor : dict
-        Weight factors for specific POIs.
+    CONFIG : dict
+        Bikeability configuration.
 
     Returns
     -------
     buildings : gpd.GeoDataFrame
         Dataframe mirroring buildings but adding scores.
     """
-
+    
+    weight_factors = CONFIG["model_weight_factors"]
     # Calculate the sum of weight factors to properly scale the scores.
     weight_sum = 0
-    for weight in list(group_weight_factor.values()):
+    for weight in list(weight_factors.values()):
         weight_sum = weight_sum + sum(weight)
 
     building_scores = []
@@ -338,7 +275,7 @@ def calc_building_scores(
         # Filter buildings without street connection.
         if building.size > 1:
             # Iterate over POI types.
-            for POI_type, weight_factor in group_weight_factor.items():
+            for POI_type, weight_factor in weight_factors.items():
                 route_scores = building[
                     building["POI_type"] == POI_type]
                 # Select only the columns containing the scores.
@@ -431,14 +368,23 @@ if __name__ == "__main__":
                       network = network)
     log.info("Points of interest (POIs) loaded... ")
 
-    dist_list = prepare_scoring(residential_buildings[1:100], POIs, network)
+    dist_list = prepare_scoring(
+        buildings = residential_buildings[1:100], 
+        POIs = POIs, 
+        network = network)
     log.info("Distances from buildings to POIs calculated... ")
     
 
-    score_list = score_routes(residential_buildings, dist_list, CONFIG["model_weight_factors"])
+    score_list = score_routes(
+        buildings = residential_buildings, 
+        dist_list = dist_list, 
+        CONFIG = CONFIG)
     log.info("Scores for routes calculated...")
 
-    buildings = calc_building_scores(residential_buildings, score_list, CONFIG["model_weight_factors"])
+    buildings = calc_building_scores(
+        buildings = residential_buildings, 
+        score_list = score_list, 
+        group_weight_factor = CONFIG["model_weight_factors"])
     log.info("Building scores assigned!")
 
     # export_scores(residential_buildings, persona_name, network, EXPORT_PATH)

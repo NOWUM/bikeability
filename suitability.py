@@ -103,7 +103,7 @@ class Suitability():
             log.warning(f"{num_missing} elements couldn't be scored for separation. \
                         \n This is most likely due to an unknown exception in the data structure.")
             scoring.loc[scoring["score_separation"] == -1,
-                        "score_separation"] = CONFIG.default_scores['surface']
+                        "score_separation"] = CONFIG["default_scores"]['separation']
 
             log.info(
                 f"Replaced missing separation scores with default value {CONFIG['default_scores']['separation']}.")
@@ -495,7 +495,7 @@ class Suitability():
         nodes, edges = ox.graph_to_gdfs(network)
         edges = edges[~edges.highway.isin(CONFIG["ignored_types"])]
 
-        fp = "C:\\Users\\jk2932e\\Python Projects\\bikeability\\pyrosm\\Aachen.osm.pbf"
+        fp = "C:\\Users\\jk2932e\\Python Projects\\bikeability\\pyrosm\\Duisburg.osm.pbf"
         osm = pyrosm.OSM(fp)
 
         # import OSM network to access metadata

@@ -83,7 +83,8 @@ def calc_score(
         Array of scores.
 
     """
-
+    np.seterr(over = "ignore")
+    
     route_distance = np.array(route_distance)
     weight_factor = np.array(weight_factor)
 

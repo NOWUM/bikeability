@@ -4,7 +4,7 @@ USE_ACCIDENTS = False
 VISUALIZE = False
 ACCIDENT_PATH = "accident_data/accidents_bike.h5"
 EXPORT_PATH = "results"
-CITY = "Aachen, Germany" # Alternative: NUTS Areas
+CITY = "Duisburg, Germany" # Alternative: NUTS Areas
 
 
 
