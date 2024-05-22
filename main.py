@@ -240,8 +240,7 @@ def score_routes(
 
 
 def calc_building_scores(
-        buildings: gpd.GeoDataFrame,
-        score_list: List[pd.DataFrame],
+        score_list: pd.DataFrame,
         CONFIG: dict) -> gpd.GeoDataFrame:
     """
 
@@ -270,36 +269,17 @@ def calc_building_scores(
 
     building_scores = []
     # Iterate over buildings
-    for building in score_list:
-        building_score_list = []
-        # Filter buildings without street connection.
-        if building.size > 1:
-            # Iterate over POI types.
-            for POI_type, weight_factor in weight_factors.items():
-                route_scores = building[
-                    building["POI_type"] == POI_type]
-                # Select only the columns containing the scores.
-                route_scores = route_scores[
-                    building.columns[building.columns.str.contains(pat='score')]]
-
-                # Iterate over score columns
-                for i in range(len(weight_factor)):
-                    # Filter unused score columns
-                    if weight_factor[i] != 0:
-                        if route_scores.size > 0:
-                            building_score_list.append(
-                                max(route_scores.iloc[:, i]))
-                        else:
-                            building_score_list.append(0)
-            building_scores.append(sum(building_score_list)/weight_sum)
-        else:
-            building_scores.append(0)
-
-    buildings.loc[:, 'score'] = building_scores
-
-    return buildings
-
-
+    for index, building in score_list.iterrows():
+        # Iterate over POI types.
+        building_score_full = 0
+        for POI_type, weight_factor in weight_factors.items():
+            route_scores = building[f"scores_{POI_type}"]
+            building_score_POI = (sum(route_scores)/weight_sum)
+            building_score_full = building_score_full + building_score_POI
+        building_scores.append(building_score_full)
+        
+    score_list.insert(5, 'full_score', building_scores)
+    return score_list
 
 def export_scores(buildings: gpd.GeoDataFrame,
                   persona_name: str, network: nx.MultiDiGraph,
@@ -369,22 +349,21 @@ if __name__ == "__main__":
     log.info("Points of interest (POIs) loaded... ")
 
     dist_list = prepare_scoring(
-        buildings = residential_buildings[1:100], 
+        buildings = residential_buildings[0:100], 
         POIs = POIs, 
         network = network)
     log.info("Distances from buildings to POIs calculated... ")
     
 
     score_list = score_routes(
-        buildings = residential_buildings, 
-        dist_list = dist_list, 
+        buildings = residential_buildings[0:100], 
+        dist_list = dist_list[0:100], 
         CONFIG = CONFIG)
     log.info("Scores for routes calculated...")
 
     buildings = calc_building_scores(
-        buildings = residential_buildings, 
-        score_list = score_list, 
-        group_weight_factor = CONFIG["model_weight_factors"])
+        score_list = score_list[0:100], 
+        CONFIG = CONFIG)
     log.info("Building scores assigned!")
 
     # export_scores(residential_buildings, persona_name, network, EXPORT_PATH)
