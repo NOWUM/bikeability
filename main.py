@@ -349,20 +349,20 @@ if __name__ == "__main__":
     log.info("Points of interest (POIs) loaded... ")
 
     dist_list = prepare_scoring(
-        buildings = residential_buildings[0:100], 
+        buildings = residential_buildings, 
         POIs = POIs, 
         network = network)
     log.info("Distances from buildings to POIs calculated... ")
     
 
     score_list = score_routes(
-        buildings = residential_buildings[0:100], 
-        dist_list = dist_list[0:100], 
+        buildings = residential_buildings, 
+        dist_list = dist_list, 
         CONFIG = CONFIG)
     log.info("Scores for routes calculated...")
 
     buildings = calc_building_scores(
-        score_list = score_list[0:100], 
+        score_list = score_list, 
         CONFIG = CONFIG)
     log.info("Building scores assigned!")
 
