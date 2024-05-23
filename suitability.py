@@ -547,8 +547,6 @@ class Suitability():
             network_osm=network_osm,
             scoring=scoring,
             CONFIG=CONFIG)
-
-        scoring = self.fill_in_scores(scoring, CONFIG)
         
         edges, network = self.suitability_to_network(nodes,
             edges, network, scoring, CONFIG)
