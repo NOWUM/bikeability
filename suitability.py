@@ -5,6 +5,7 @@ import pandas as pd
 import networkx as nx
 import osmnx as ox
 
+import os
 import pyrosm
 import accident_data.accidents_util as acd
 log = logging.getLogger('Bikeability')
@@ -253,7 +254,7 @@ class Suitability():
                 score = self.complete_road_related(scoring, score, "separation", CONFIG, type_defaults)
         return scoring_full    
             
-    def import_network(self, osm: pyrosm.OSM, log: logging.Logger, CONFIG: dict) -> pd.DataFrame():
+    def import_network(self, CONFIG: dict) -> pd.DataFrame():
         """
         Imports and filters the road network from osm.
     
@@ -272,6 +273,13 @@ class Suitability():
             Dataframe containing OSM map- and metadata that is relevant for calculating bikeability.
             
         """
+        city = CONFIG["city"].split(",")[0]
+        fp = f"pyrosm/{city}.osm.pbf"
+        if ~os.path.isfile(fp):
+            fp = fp = pyrosm.get_data(city)
+        
+        osm = pyrosm.OSM(fp)
+        
         network_osm = osm.get_network("cycling")
         log.info("Successfully downloaded osm network data!")
 
@@ -463,6 +471,12 @@ class Suitability():
         edges = gpd.GeoDataFrame(edges, crs="EPSG:25832")
 
         return edges
+    
+    def import_network_pyrosm(CONFIG: dict):
+        
+
+        # import OSM network to access metadata
+        network_osm = self.import_network(osm, log, CONFIG)
 
     def eval_suitability(self, CONFIG: dict):
         """
@@ -495,11 +509,8 @@ class Suitability():
         nodes, edges = ox.graph_to_gdfs(network)
         edges = edges[~edges.highway.isin(CONFIG["ignored_types"])]
 
-        fp = "C:\\Users\\jk2932e\\Python Projects\\bikeability\\pyrosm\\Duisburg.osm.pbf"
-        osm = pyrosm.OSM(fp)
-
         # import OSM network to access metadata
-        network_osm = self.import_network(osm, log, CONFIG)
+        network_osm = self.import_network(CONFIG)
 
         # initialise scoring dataframe
         scoring = network_osm[["name", "id", "tags", "osm_type", "highway", "geometry",
