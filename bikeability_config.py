@@ -5,7 +5,7 @@ VISUALIZE = False
 ACCIDENT_PATH = "accident_data/accidents_bike.h5"
 PBF_PATH = ".\\pyrosm\\Duisburg.osm.pbf"
 EXPORT_PATH = "results"
-CITY = "Aachen, Germany"
+CITY = "Duisburg, Germany"
 
 
 

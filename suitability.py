@@ -7,6 +7,7 @@ import osmnx as ox
 
 import os
 import pyrosm
+import math
 import accident_data.accidents_util as acd
 log = logging.getLogger('Bikeability')
 # test = pyrosm.get_data("Aachen")
@@ -101,13 +102,14 @@ class Suitability():
         missing_scores = network_osm[scoring["score_separation"] == -1]
         num_missing = missing_scores["id"].size
         if num_missing > 0:
-            log.warning(f"{num_missing} elements couldn't be scored for separation. \
-                        \n This is most likely due to an unknown exception in the data structure.")
-            scoring.loc[scoring["score_separation"] == -1,
-                        "score_separation"] = CONFIG["default_scores"]['separation']
+            scoring = self.fill_in_scores(scoring, CONFIG, "separation")
+        #     log.warning(f"{num_missing} elements couldn't be scored for separation. \
+        #                 \n This is most likely due to an unknown exception in the data structure.")
+        #     scoring.loc[scoring["score_separation"] == -1,
+        #                 "score_separation"] = CONFIG["default_scores"]['separation']
 
-            log.info(
-                f"Replaced missing separation scores with default value {CONFIG['default_scores']['separation']}.")
+        #     log.info(
+        #         f"Replaced missing separation scores with default value {CONFIG['default_scores']['separation']}.")
         return scoring, missing_scores
 
     def score_route_surfaces(self, network_osm: pd.DataFrame, scoring: gpd.GeoDataFrame, CONFIG: dict) -> tuple():
@@ -205,6 +207,8 @@ class Suitability():
         scoring.loc[network_osm["smoothness"].isin(["impassable"]),
                     "score_surface"] = 0
 
+        
+
         missing_data = network_osm.smoothness.isnull(
         ) & network_osm.surface.isnull() & network_osm.tracktype.isnull()
         unscored = scoring["score_surface"] == -1
@@ -212,47 +216,68 @@ class Suitability():
         missing_scores = network_osm[unscored & missing_data]
         unknown_scores = network_osm[unscored & ~missing_data]
 
-        num_unknown = unknown_scores["id"].size
-        if num_unknown > 0:
-            log.warning(f"{num_unknown} elements couldn't be scored for surface area \
-                        \n due to unknown values. The default value {CONFIG['default_scores']['surface']} is used.")
-
         num_missing = missing_scores["id"].size
         if num_missing > 0:
-            log.info(f"{num_missing} elements couldn't be scored for surface area \
-                     \n due to insufficient data. The default value {CONFIG['default_scores']['surface']} is used.")
+            scoring = self.fill_in_scores(scoring, CONFIG, "surface")
+        #     log.warning(f"{num_unknown} elements couldn't be scored for surface area \
+        #                 \n due to unknown values. The default value {CONFIG['default_scores']['surface']} is used.")
 
-        scoring.loc[scoring["score_surface"] == -1,
-                    "score_surface"] = CONFIG['default_scores']['surface']
+        # num_missing = missing_scores["id"].size
+        # if num_missing > 0:
+        #     log.info(f"{num_missing} elements couldn't be scored for surface area \
+        #              \n due to insufficient data. The default value {CONFIG['default_scores']['surface']} is used.")
+
+        # scoring.loc[scoring["score_surface"] == -1,
+        #             "score_surface"] = CONFIG['default_scores']['surface']
         return scoring, missing_scores
     
     def complete_road_related(self, scoring: pd.DataFrame(), score: pd.Series(), score_type: str(), CONFIG: dict(), type_defaults: pd.DataFrame()) -> pd.Series():
         related_scores = scoring.loc[scoring.name.isin([score["name"]]), f"score_{score_type}"]
+        related_scores = related_scores[related_scores!=-1]
         if related_scores.size >= 1:
             score[f"score_{score_type}"] = round(related_scores.mean())
         else:
-            score[f"score_{score_type}"] = type_defaults[score["highway", score_type]]
+            score[f"score_{score_type}"] = type_defaults.loc[score["highway"], score_type]
         return  score
     
-    def fill_in_scores(self, scoring: pd.DataFrame(), CONFIG: dict()):
+    def fill_in_scores(self, scoring: pd.DataFrame, CONFIG: dict, score_type: str):
         scoring_full = scoring
-        
-        highwaytypes = scoring.highway.unique()
         type_defaults = pd.DataFrame()
-        type_defaults.insert(0, "surface", -1)
-        type_defaults.insert(1, "separation", -1)
+        highwaytypes = scoring.highway.unique()
+        type_defaults.insert(0, score_type, -1)
         for highwaytype in highwaytypes:
-            surfaces_of_type = scoring.loc[scoring.highway.isin([highwaytype]), "score_surface"]
-            separation_of_type = scoring.loc[scoring.highway.isin([highwaytype]), "score_separation"]
-            type_defaults.loc[highwaytype, "surface"] = round(surfaces_of_type[surfaces_of_type != -1].mean())
-            type_defaults.loc[highwaytype, "separation"] = round(separation_of_type[surfaces_of_type != -1].mean())
-            
+            scores_of_type = scoring.loc[scoring.highway.isin([highwaytype]), f"score_{score_type}"]
+            highwaytype_set_scores = scores_of_type[scores_of_type != -1]
+            if highwaytype_set_scores.size > 0:
+                highwaytype_default = round(highwaytype_set_scores.mean())
+                type_defaults.loc[highwaytype, score_type] = highwaytype_default
+            else:
+                type_defaults.loc[highwaytype, score_type] = CONFIG["default_scores"][score_type]
+            # type_defaults.loc[highwaytype, score_type] = round(scores_of_type[scores_of_type != -1].mean())
+
         for index, score in scoring_full.iterrows():
-            if score.score_surface == -1:
-                score = self.complete_road_related(scoring, score, "surface", CONFIG, type_defaults)
-            if score.score_separation == -1:
-                score = self.complete_road_related(scoring, score, "separation", CONFIG, type_defaults)
-        return scoring_full    
+            if score[f"score_{score_type}"] == -1:
+                score = self.complete_road_related(scoring, score, score_type, CONFIG, type_defaults)
+                scoring_full.loc[index] = score
+        return scoring_full
+
+
+        
+        # highwaytypes = scoring.highway.unique()
+        # type_defaults = pd.DataFrame()
+        # type_defaults.insert(0, "surface", -1)
+        # type_defaults.insert(1, "separation", -1)
+        # for highwaytype in highwaytypes:
+        #     surfaces_of_type = scoring.loc[scoring.highway.isin([highwaytype]), "score_surface"]
+        #     separation_of_type = scoring.loc[scoring.highway.isin([highwaytype]), "score_separation"]
+        #     type_defaults.loc[highwaytype, "surface"] = round(surfaces_of_type[surfaces_of_type != -1].mean())
+        #     type_defaults.loc[highwaytype, "separation"] = round(separation_of_type[surfaces_of_type != -1].mean())
+            
+        # for index, score in scoring_full.iterrows():
+        #     if score.score_surface == -1:
+        #         score = self.complete_road_related(scoring, score, "surface", CONFIG, type_defaults)
+        #     if score.score_separation == -1:
+        #         score = self.complete_road_related(scoring, score, "separation", CONFIG, type_defaults)
             
     def import_network(self, CONFIG: dict) -> pd.DataFrame():
         """
@@ -276,7 +301,7 @@ class Suitability():
         city = CONFIG["city"].split(",")[0]
         fp = f"pyrosm/{city}.osm.pbf"
         if ~os.path.isfile(fp):
-            fp = fp = pyrosm.get_data(city)
+            fp = pyrosm.get_data(city, directory = "pyrosm")
         
         osm = pyrosm.OSM(fp)
         
@@ -471,12 +496,6 @@ class Suitability():
         edges = gpd.GeoDataFrame(edges, crs="EPSG:25832")
 
         return edges
-    
-    def import_network_pyrosm(CONFIG: dict):
-        
-
-        # import OSM network to access metadata
-        network_osm = self.import_network(osm, log, CONFIG)
 
     def eval_suitability(self, CONFIG: dict):
         """
