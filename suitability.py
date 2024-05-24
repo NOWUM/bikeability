@@ -7,7 +7,6 @@ import osmnx as ox
 
 import os
 import pyrosm
-import math
 import accident_data.accidents_util as acd
 log = logging.getLogger('Bikeability')
 # test = pyrosm.get_data("Aachen")
@@ -214,7 +213,6 @@ class Suitability():
         unscored = scoring["score_surface"] == -1
 
         missing_scores = network_osm[unscored & missing_data]
-        unknown_scores = network_osm[unscored & ~missing_data]
 
         num_missing = missing_scores["id"].size
         if num_missing > 0:

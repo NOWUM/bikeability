@@ -1,5 +1,3 @@
-import pandas as pd
-
 USE_ACCIDENTS = False
 VISUALIZE = False
 ACCIDENT_PATH = "accident_data/accidents_bike.h5"

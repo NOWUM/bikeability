@@ -1,13 +1,10 @@
 import logging
-from typing import List, Tuple
 
 import geopandas as gpd
 import networkx as nx
 import osmnx as ox
 import pandas as pd
-from shapely.geometry import Point
 
-import accident_data.accidents_util as acd
 import visualisation
 import helper
 from bikeability_config import CONFIG
@@ -137,7 +134,7 @@ def path_to_projection(
 def prepare_scoring(
         buildings: gpd.GeoDataFrame,
         POIs: gpd.GeoDataFrame,
-        network: nx.MultiDiGraph) -> List[pd.DataFrame]:
+        network: nx.MultiDiGraph) -> list[pd.DataFrame]:
     """
     Prepares the consecutive scoring of buildings by calculating weighted 
     scores for all routes between the listed buildings and relevant POIs.
@@ -192,8 +189,8 @@ def prepare_scoring(
     
 def score_routes(
         buildings: gpd.GeoDataFrame,
-        dist_list: List[pd.DataFrame],
-        CONFIG: dict) -> List[pd.DataFrame]:
+        dist_list: list[pd.DataFrame],
+        CONFIG: dict) -> list[pd.DataFrame]:
     """
     Function to calculate walk scores for a list of dataframes.
 
