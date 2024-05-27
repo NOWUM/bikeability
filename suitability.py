@@ -57,11 +57,12 @@ class Suitability():
     
         '''
         scoring.insert(1, "score_separation", -1)
-        # Default value for cycleways is 5
+        # Default value for cycleways is 4, for bicycle roads it's 5
         cycleways = network_osm["highway"] == "cycleway"
         bicycle_roads = network_osm["bicycle_road"] == "yes"
-        scoring.loc[cycleways | bicycle_roads,
+        scoring.loc[bicycle_roads,
                     "score_separation"] = 5
+        scoring.loc[cycleways, "score_separation"] = 4
         # Default value for motorways areas is 0
         scoring.loc[network_osm["highway"].isin(["motorway"]),
                     "score_separation"] = 0
