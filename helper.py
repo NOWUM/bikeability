@@ -14,7 +14,6 @@ import numpy as np
 import osmnx as ox
 import pandas as pd
 
-
 def calc_shortest_path_length(
         end_node: int,
         start_node: int,

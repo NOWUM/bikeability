@@ -1,4 +1,4 @@
-USE_ACCIDENTS = False
+USE_ACCIDENTS = True
 VISUALIZE = False
 ACCIDENT_PATH = "accident_data/accidents_bike.h5"
 PBF_PATH = ".\\pyrosm\\Duisburg.osm.pbf"
