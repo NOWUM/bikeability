@@ -10,6 +10,9 @@ import helper
 from bikeability_config import CONFIG
 from suitability import Suitability
 
+import warnings
+
+warnings.filterwarnings("error", message="DeprecationWarning: Passing a BlockManager to GeoDataFrame is deprecated and will raise in a future version. Use public APIs instead.")
 # logging
 log = logging.getLogger("Bikeability")
 
@@ -47,13 +50,13 @@ def fetch_and_filter_residences(
 
 
 def fetch_POIs(
-        city: str,
-        poi_dict: dict,
+        CONFIG: dict,
         network: nx.MultiDiGraph) -> gpd.GeoDataFrame:
     """
     Function for fetching POIs for given group of people.
     """
-
+    city = CONFIG['city']
+    poi_dict = CONFIG["pois_model"]
     # fetch original POI GDF
     pois = ox.features_from_place(city, poi_dict)
 
@@ -77,8 +80,13 @@ def fetch_POIs(
 
     # resetting index
     pois.reset_index(inplace=True)
+    
+    categories = CONFIG["weight_factors_categories"]
+    pois.insert(1, "POI_category", "none")
+    for category, content in categories.items():
+        pois.POI_category.loc[pois.POI_type.isin(content)] = category
 
-    return pois[["osmid", "geometry", "centroid", "node", "POI_type"]]
+    return pois[["name", "osmid", "geometry", "centroid", "node", "POI_type", "POI_category"]]
 
 
 
@@ -340,8 +348,7 @@ if __name__ == "__main__":
     residential_buildings = fetch_and_filter_residences(city = CONFIG['city'], network = network)
     log.info("Buildings loaded... ")
 
-    POIs = fetch_POIs(city = CONFIG['city'], 
-                      poi_dict = CONFIG["pois_model"], 
+    POIs = fetch_POIs(CONFIG = CONFIG, 
                       network = network)
     log.info("Points of interest (POIs) loaded... ")
 
