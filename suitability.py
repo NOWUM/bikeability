@@ -299,7 +299,7 @@ class Suitability():
         """
         city = CONFIG["city"].split(",")[0]
         fp = f"pyrosm/{city}.osm.pbf"
-        if ~os.path.isfile(fp):
+        if not os.path.isfile(fp):
             fp = pyrosm.get_data(city, directory = "pyrosm")
         
         osm = pyrosm.OSM(fp)
@@ -495,6 +495,36 @@ class Suitability():
         edges = gpd.GeoDataFrame(edges, crs="EPSG:25832")
 
         return edges
+    
+    def remove_ignored_types(self, nodes: gpd.GeoDataFrame, edges: gpd.GeoDataFrame, CONFIG: dict):
+        """
+        Removes specified edges from the network and cleans up remaining nodes afterwards
+
+        Parameters
+        ----------
+        nodes : gpd.GeoDataFrame
+            Dataframe of the network nodes.
+        edges : gpd.GeoDataFrame
+            Dataframe of the network edges.
+        CONFIG : dict
+            Dictionary of configuration options and static variables for bikeability calculation.
+
+        Returns
+        -------
+        nodes : gpd.GeoDataFrame
+            Dataframe of the network nodes that weren't exclusively connected to ignored roads.
+        edges : gpd.GeoDataFrame
+            List of edges that don't belong to an ignored road type.
+
+        """
+        edges = edges[~edges.highway.isin(CONFIG["ignored_types"])]
+        from_nodes = edges.index.get_level_values(0)
+        to_nodes = edges.index.get_level_values(1)
+        valid_nodes = from_nodes.append(to_nodes)
+        valid_nodes = valid_nodes.unique()
+        
+        nodes = nodes.loc[nodes.index.isin(valid_nodes)]
+        return nodes, edges
 
     def eval_suitability(self, CONFIG: dict):
         """
@@ -505,8 +535,8 @@ class Suitability():
         ----------
         log : logging.logger
             Relevant log file.
-        DEFAULT : dict
-            Dictionary of default values for scoring.
+        CONFIG : dict
+            Dictionary of configuration options and static variables for bikeability calculation.
 
         Returns
         -------
@@ -525,8 +555,9 @@ class Suitability():
         # Convert to dataframe for easier data handling
         # network direkt suitability übergeben
         nodes, edges = ox.graph_to_gdfs(network)
-        edges = edges[~edges.highway.isin(CONFIG["ignored_types"])]
 
+        nodes, edges = self.remove_ignored_types(nodes, edges, CONFIG)
+    
         # import OSM network to access metadata
         network_osm = self.import_network(CONFIG)
 
