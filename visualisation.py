@@ -38,10 +38,16 @@ def create_suitability_visualisation(edges: pd.DataFrame):
                                           vmax = 5)
         score_accident.save(f"{EXPORT_PATH}/accidents_score.html")
 
-def create_building_visualisation(buildings:gpd.GeoDataFrame, POIs: gpd.GeoDataFrame):
+def create_building_visualisation(buildings:gpd.GeoDataFrame):
     buildings_for_vis = buildings[["osmid", "geometry", "centroid", "node", "building", "full_score"]]
     buildings_vis = buildings_for_vis.explore(column = "full_score",
                                       cmap = "viridis",
                                       vmin = 0, 
                                       vmax = 1)
     buildings_vis.save(f"{EXPORT_PATH}/buildings.html")
+    
+def create_POI_visualisation(POIs: gpd.GeoDataFrame):
+    POIs_for_vis = POIs[["name", "osmid", "geometry", "node", "POI_category"]]
+    POIs_for_vis = POIs_for_vis[POIs_for_vis.POI_category != "none"]
+    POIs_vis = POIs.explore(column = "POI_category")
+    POIs_vis.save(f"{EXPORT_PATH}/POIs.html")
