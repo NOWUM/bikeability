@@ -395,7 +395,7 @@ class Suitability():
             if related_scores.size > 0:
                 # If different scores belong to the same edge, the mean is used
                 factor_weights = CONFIG['factor_weights']
-                transation_factors = CONFIG['translation_factors']
+                translation_factors = CONFIG['translation_factors']
                 score_separation = related_scores.score_separation.mean().round()
                 score_surface = related_scores.score_surface.mean().round()
                 if CONFIG['use_accidents']:
@@ -407,15 +407,13 @@ class Suitability():
                 if CONFIG['use_accidents']:
                     factor_accidents = factor_weights["accidents"]
                     modifier = 1 + \
-                        transation_factors["separation"][score_separation] * score_separation + \
-                        transation_factors["surface"][score_surface] * factor_surface + \
-                        transation_factors["accidents"][score_accident] * \
-                        factor_accidents
+                        translation_factors["separation"][score_separation] * factor_separation + \
+                        translation_factors["surface"][score_surface] * factor_surface + \
+                        translation_factors["accidents"][score_accident] * factor_accidents
                 else:
                     modifier = 1 + \
-                        transation_factors["separation"][score_separation] * factor_weights["separation"] + \
-                        transation_factors["surface"][score_surface] * \
-                        factor_weights["surface"]
+                        translation_factors["separation"][score_separation] * factor_separation + \
+                        translation_factors["surface"][score_surface] * factor_surface
                 modifiers.append(modifier)
                 length_modified.append(edge.length * modifier)
                 scores_separation.append(score_separation)
