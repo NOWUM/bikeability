@@ -14,27 +14,27 @@ DEFAULT_SCORES = {'separation': 2,
 # translation scores to mathematical modifiers for route score
 
 # Weighting different factors for bikeability against each other
-FACTOR_WEIGHTS = {"separation": 2,
+FACTOR_WEIGHTS = {"separation": 1,
                   "surface": 1,
                   "traffic": 1,
-                  "accidents": 0.5}
+                  "accidents": 1}
 
 # mathematical impact of different levels of service
 # The numbers from 5 to 1 are representative of a decreasing level of quality.
 
 factors_separation = {5: 0, 
-                      4: 0.02,
-                      3: 0.04,
-                      2: 0.06,
-                      1: 0.1,
-                      0: 1}
+                      4: 0.2,
+                      3: 0.5,
+                      2: 1,
+                      1: 3,
+                      0: 10}
 
 factors_surface =    {5: 0,
-                      4: 0.02,
-                      3: 0.04,
-                      2: 0.06,
-                      1: 0.1,
-                      0: 1}
+                      4: 0.1,
+                      3: 1,
+                      2: 2,
+                      1: 5,
+                      0: 10}
 
 factors_traffic =    {5: 0,
                       4: 0.02,
@@ -44,9 +44,9 @@ factors_traffic =    {5: 0,
                       0: 1}
 
 factors_accidents =  {5: 0,
-                      4: 0.02,
-                      3: 0.04,
-                      2: 0.06,
+                      4: 0.01,
+                      3: 0.02,
+                      2: 0.03,
                       1: 0.1,
                       0: 1}
 
