@@ -22,7 +22,7 @@ def create_suitability_visualisation(edges: pd.DataFrame):
     suitability_modifier = edges_for_vis.explore(column = "suitability_modifier",
                                       cmap = "viridis",
                                       vmin = 1, 
-                                      vmax = 2)
+                                      vmax = 5)
     suitability_modifier.save(f"{EXPORT_PATH}/suitability_modifier.html")
 
     if USE_ACCIDENTS:

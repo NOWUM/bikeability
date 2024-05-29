@@ -403,15 +403,9 @@ class Suitability():
                 # Scale weight factors so they always accord to the same scaling
                 factor_separation = factor_weights["separation"]
                 factor_surface = factor_weights["surface"]
-                factor_sum = 50  # The sum all weight factors for road suitability schould add up to
                 # Factorise Scores and combine to edge score
                 if CONFIG['use_accidents']:
                     factor_accidents = factor_weights["accidents"]
-                    sum_weights = sum(
-                        [factor_separation, factor_surface, factor_accidents])
-                    factor_separation = factor_separation*factor_sum/sum_weights
-                    factor_surface = factor_surface*factor_sum/sum_weights
-                    factor_accidents = factor_accidents*factor_sum/sum_weights
                     modifier = 1 + \
                         transation_factors["separation"][score_separation] * score_separation + \
                         transation_factors["surface"][score_surface] * factor_surface + \
