@@ -5,25 +5,29 @@ from bikeability_config import USE_ACCIDENTS, EXPORT_PATH
 def create_suitability_visualisation(edges: pd.DataFrame):
     edges_for_vis = gpd.GeoDataFrame(edges, crs="EPSG:25832")
     edges_for_vis = edges_for_vis[~edges_for_vis.geometry.isna()]
+    style_kwds = {"weight": 3}
 
     scores_surface = edges_for_vis.explore(column = "score_surface", 
                                             cmap = "viridis", 
                                             vmin = 0, 
-                                            vmax = 5)
+                                            vmax = 1,
+                                            style_kwds = style_kwds)
     scores_surface.save(f"{EXPORT_PATH}/surface.html")
     
     
     scores_separation = edges_for_vis.explore(column = "score_separation", 
                                               cmap = "viridis", 
                                               vmin = 0, 
-                                              vmax = 5)
+                                              vmax = 1,
+                                              style_kwds = style_kwds)
     scores_separation.save(f"{EXPORT_PATH}/separation.html")
-
-    suitability_modifier = edges_for_vis.explore(column = "suitability_modifier",
+    
+    suitability_score = edges_for_vis.explore(column = "suitability_modifier",
                                       cmap = "viridis",
-                                      vmin = 1, 
-                                      vmax = 5)
-    suitability_modifier.save(f"{EXPORT_PATH}/suitability_modifier.html")
+                                      vmin = 0, 
+                                      vmax = 1,
+                                      style_kwds = style_kwds)
+    suitability_score.save(f"{EXPORT_PATH}/suitability.html")
 
     if USE_ACCIDENTS:
         accident_count = edges_for_vis.explore(column = "accident_count",
