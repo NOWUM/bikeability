@@ -423,8 +423,9 @@ class Suitability():
                 scores_separation.append(score_separation)
                 scores_surfaces.append(score_surface)
             else:
-                length_modified.append(9999999)
-                modifiers.append(9999999)
+                modifier = 0.01
+                length_modified.append(edge.length / modifier)
+                modifiers.append(modifier)
                 scores_separation.append(0)
                 scores_surfaces.append(0)
 
