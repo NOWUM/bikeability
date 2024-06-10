@@ -238,7 +238,7 @@ def score_routes(
                 weight_factor=weight_factor)
             scores[building_index] = score
             
-        buildings = buildings.join(scores)
+        buildings.insert(5, f"scores_{POI_type}", scores)
         del scores            
     return buildings
 

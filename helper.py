@@ -35,7 +35,7 @@ def calc_shortest_path_length(
             G=network,
             source=start_node,
             target=end_node,
-            weight="length")
+            weight="length_modified")
     else:
         return 99999999
 
@@ -56,7 +56,7 @@ def calc_shortest_path(
 
 
 def sigmoid(x):
-    midpoint = 4000
+    midpoint = 3000
     angle = 0.0015
     scale = 1
     y = scale / (scale + np.exp(angle*(x-midpoint)))

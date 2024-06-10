@@ -169,13 +169,15 @@ class Suitability():
             pat=":", n=1, expand=True)
         network_osm.loc[:, "surface"] = generalise[0]
 
-        scoring.loc[network_osm["surface"].isin(["asphalt", "chipseal", "concrete",
+        scoring.loc[network_osm["surface"].isin(["asphalt", "concrete",
                                                  "compacted", "tar", "1"]),
                     "score_surface"] = 5
-        scoring.loc[network_osm["surface"].isin(["paved", "paving_stones", "bricks"]),
+        scoring.loc[network_osm["surface"].isin(["paved", "paving_stones", 
+                                                 "bricks"]),
                     "score_surface"] = 4
         scoring.loc[network_osm["surface"].isin(["sett", "metal",
-                                                 "wood", "fine_gravel", "steel",
+                                                 "wood", "chipseal", 
+                                                 "fine_gravel", "steel",
                                                  "grass_paver"]),
                     "score_surface"] = 3
         scoring.loc[network_osm["surface"].isin(["rock", "dirt", "ground", "grit",
