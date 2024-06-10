@@ -408,16 +408,18 @@ class Suitability():
                 # Factorise Scores and combine to edge score
                 if CONFIG['use_accidents']:
                     factor_accidents = factor_weights["accidents"]
-                    modifier = 1 + \
-                        translation_factors["separation"][score_separation] * factor_separation + \
-                        translation_factors["surface"][score_surface] * factor_surface + \
+                    modifier = 1 - \
+                        translation_factors["separation"][score_separation] * factor_separation - \
+                        translation_factors["surface"][score_surface] * factor_surface - \
                         translation_factors["accidents"][score_accident] * factor_accidents
                 else:
-                    modifier = 1 + \
-                        translation_factors["separation"][score_separation] * factor_separation + \
+                    modifier = 1 - \
+                        translation_factors["separation"][score_separation] * factor_separation - \
                         translation_factors["surface"][score_surface] * factor_surface
+                if modifier < 0.1:
+                    modifier = 0.1
                 modifiers.append(modifier)
-                length_modified.append(edge.length * modifier)
+                length_modified.append(edge.length / modifier)
                 scores_separation.append(score_separation)
                 scores_surfaces.append(score_surface)
             else:
