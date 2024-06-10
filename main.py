@@ -279,7 +279,10 @@ def calc_building_scores(
         building_score_full = 0
         for POI_type, weight_factor in weight_factors.items():
             route_scores = building[f"scores_{POI_type}"]
-            building_score_POI = (sum(route_scores)/weight_sum)
+            if not isinstance(route_scores, float):
+                building_score_POI = (sum(route_scores)/weight_sum)
+            else:
+                building_score_POI = 0
             building_score_full = building_score_full + building_score_POI
         building_scores.append(building_score_full)
         
