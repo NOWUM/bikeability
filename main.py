@@ -347,24 +347,24 @@ if __name__ == "__main__":
         visualisation.create_suitability_visualisation(edges)
 
     
-    # Download OSM buildings chart  
+    # Download OSM buildings chart
     residential_buildings = fetch_and_filter_residences(city = CONFIG['city'], network = network)
     log.info("Buildings loaded... ")
 
-    POIs = fetch_POIs(CONFIG = CONFIG, 
+    POIs = fetch_POIs(CONFIG = CONFIG,
                       network = network)
     log.info("Points of interest (POIs) loaded... ")
 
     dist_list = prepare_scoring(
-        buildings = residential_buildings, 
-        POIs = POIs, 
+        buildings = residential_buildings,
+        POIs = POIs,
         network = network)
     log.info("Distances from buildings to POIs calculated... ")
     
 
     score_list = score_routes(
-        buildings = residential_buildings, 
-        dist_list = dist_list, 
+        buildings = residential_buildings,
+        dist_list = dist_list,
         CONFIG = CONFIG)
     log.info("Scores for routes calculated...")
 
