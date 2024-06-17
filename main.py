@@ -4,6 +4,7 @@ import geopandas as gpd
 import networkx as nx
 import osmnx as ox
 import pandas as pd
+import numpy as np
 
 import visualisation
 import helper
@@ -289,6 +290,81 @@ def calc_building_scores(
     score_list.insert(5, 'full_score', building_scores)
     return score_list
 
+def score_buildings(buildings: gpd.GeoDataFrame,
+                    POIs: gpd.GeoDataFrame,
+                    network: nx.MultiDiGraph,
+                    CONFIG: dict):
+    """
+    Calculate bikeability scores for buildings in the list using a suitability
+    network.
+
+    Parameters
+    ----------
+    buildings : gpd.GeoDataFrame
+        Dataframe containing a list of buildings.
+    POIs : gpd.GeoDataFrame
+        List of points of interest.
+    network : nx.MultiDiGraph
+        Node-Edge-Network of the relevant area.
+    CONFIG : dict
+        Bikeability configuration.
+
+    Returns
+    -------
+    buildings : gpd.GeoDataFrame
+        Buildings dataframe including bikeability scores.
+
+    """
+    
+    # The required number of POIs per category before the range is extended
+    required_POIs = 10
+        
+    categories = CONFIG["weight_factors_categories"]
+    weight_factors = CONFIG["model_weight_factors"]
+    
+    weight_sum = 0
+    for weight in list(weight_factors.values()):
+        weight_sum = weight_sum + sum(weight)
+        
+    buildings.insert(5, "score", float(-1))
+    
+    for index, building in buildings.iterrows():
+        building_scores = pd.Series()
+        for category in categories:
+            POIs_category = POIs[POIs.POI_type.isin(categories[category])]
+            
+            # Filter the specified number of POIs in the category, using the 
+            # shortest linear distances
+            shortest_distances = helper.knearest(from_points = building.centroid,
+                                          to_points = POIs_category.centroid,
+                                          k = required_POIs)
+            POIs_within = POIs.loc[shortest_distances.index]
+            # Find the shortest (weighted) routes from building to POI
+            routes = POIs_within.node.apply(
+                helper.calc_shortest_path,
+                args = (building["node"], network, ))
+            # Extract lengths and suitability values from routes
+            route_values = helper.get_route_values(routes = routes,
+                                              edges = edges)
+            # transform distances to scores using sigmoid function
+            distance_scores = helper.sigmoid(route_values.length)
+            route_values.insert(1, "dist_score", distance_scores)
+            
+            # calculate full route scores
+            route_scores = route_values.dist_score - (1-route_values.suitability)
+            route_scores[route_scores<0] = 0
+            route_values.insert(3, "route_score", route_scores)
+            
+            weight_factor_POI = weight_factors[category]
+            if len(weight_factor_POI) > len(route_values):
+                weight_factor_POI = weight_factor_POI[0:len(route_values)]
+            relevant_scores = route_values["route_score"].nsmallest(len(weight_factor_POI)).to_list()
+            weighted_scores = np.array(weight_factor_POI) * np.array(relevant_scores)
+            building_scores[category] = sum(weighted_scores)
+        building_score = sum(building_scores)/weight_sum
+        buildings.loc[index, "score"] = building_score
+    return buildings
+
 def export_scores(buildings: gpd.GeoDataFrame,
                   persona_name: str, network: nx.MultiDiGraph,
                   EXPORT_PATH: str):
@@ -354,6 +430,12 @@ if __name__ == "__main__":
     POIs = fetch_POIs(CONFIG = CONFIG,
                       network = network)
     log.info("Points of interest (POIs) loaded... ")
+    
+    buildings_scored = score_buildings(
+        buildings = residential_buildings,
+        POIs = POIs,
+        network = network,
+        CONFIG = CONFIG)
 
     dist_list = prepare_scoring(
         buildings = residential_buildings,
@@ -361,7 +443,6 @@ if __name__ == "__main__":
         network = network)
     log.info("Distances from buildings to POIs calculated... ")
     
-
     score_list = score_routes(
         buildings = residential_buildings,
         dist_list = dist_list,

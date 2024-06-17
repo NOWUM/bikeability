@@ -48,12 +48,14 @@ def calc_shortest_path(
     Calculates the shortest path between two points in the network as a series
     of nodes.
     """
-    return nx.shortest_path(
-        G=network,
-        source=start_node,
-        target=end_node,
-        weight="length")
-
+    if nx.has_path(G = network, source=start_node, target=end_node):
+        return nx.shortest_path(
+            G=network,
+            source=start_node,
+            target=end_node,
+            weight="length_modified")
+    else:
+        return []
 
 def sigmoid(x):
     midpoint = 3000
@@ -61,7 +63,55 @@ def sigmoid(x):
     scale = 1
     y = scale / (scale + np.exp(angle*(x-midpoint)))
     return y
-             
+
+def get_route_values(routes: pd.Series,
+                      edges: gpd.GeoDataFrame):
+    """
+    
+
+    Parameters
+    ----------
+    routes : pd.Series
+        Series of Series, each representing edges in one route.
+    edges : gpd.GeoDataFrame
+        Dataframe containing all edges in the network.
+
+    Returns
+    -------
+    route_values : pd.DataFrame
+        Dataframe containing distances and (mean) suitability score for all 
+        specified routes.
+
+    """
+    distances = pd.Series()
+    suitabilities = pd.Series()
+    for index, route in routes.items():
+        # if there is no route the score is 0
+        if not route:
+            distances[index] = 0
+            suitabilities[index] = 0
+        # if the route only contains one node, building and POI are at the same
+        # adress => perfect score
+        elif len(route) == 1:
+            distances[index] = 0
+            suitabilities[index] = 1
+        else:
+            # find egdes belinging to route
+            relevant_edges = gpd.GeoDataFrame()
+            for i in range(len(route)-1):
+                new_edge = edges.loc[route[i], route[i+1]]
+                relevant_edges = pd.concat([relevant_edges, new_edge])
+            # sum up the route's length (unmodified length)
+            route_length = relevant_edges.length.sum()
+            # middle suitability, using length as a weight
+            suitability_weighted = relevant_edges.length * relevant_edges.suitability_modifier
+            distances[index] = route_length
+            suitabilities[index] = suitability_weighted.sum()/route_length
+
+    route_values = pd.DataFrame({"length": distances, 
+                                 "suitability": suitabilities})
+    return route_values
+    
 def calc_score(
         route_distance: List[float],
         weight_factor: List[int]) -> np.array:
@@ -164,6 +214,15 @@ def make_export_dir(path: str):
 
     if not shp_exist:
         os.makedirs(f'{path}/shp')
+        
+def knearest(from_points, to_points, k):
+    """
+    Finds the k nearest to points for each from point.
+
+    """
+    distlist = to_points.distance(from_points)
+    distlist.sort_values(ascending=True, inplace=True) 
+    return distlist[:k]
 
 
 def visualize_scores(network: nx.MultiDiGraph,
