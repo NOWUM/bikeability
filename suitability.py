@@ -578,6 +578,6 @@ class Suitability():
         
         edges, network = self.suitability_to_network(nodes,
             edges, network, scoring, CONFIG)
-        # edges = self.fill_geometry(edges, scoring)
-
+        edges.sort_index(inplace = True)
+        
         return edges, network
