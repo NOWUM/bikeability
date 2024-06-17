@@ -9,3 +9,4 @@
 *.spydata
 *.parquet
 *.pkl
+testing/
