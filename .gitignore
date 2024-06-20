@@ -10,3 +10,4 @@
 *.parquet
 *.pkl
 testing/
+topology/
