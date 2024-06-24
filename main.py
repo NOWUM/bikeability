@@ -293,7 +293,8 @@ def calc_building_scores(
 def score_building(building: pd.Series,
                    POIs: gpd.GeoDataFrame,
                    network: nx.MultiDiGraph,
-                   CONFIG: dict):
+                   CONFIG: dict,
+                   weight_sum: int):
     """
     Calculate bikeability scores for buildings in the list using a suitability
     network.
@@ -321,11 +322,7 @@ def score_building(building: pd.Series,
         
     categories = CONFIG["weight_factors_categories"]
     weight_factors = CONFIG["model_weight_factors"]
-    
-    weight_sum = 0
-    for weight in list(weight_factors.values()):
-        weight_sum = weight_sum + sum(weight)
-        
+
     building_scores = pd.Series()
     for category in categories:
         POIs_category = POIs[POIs.POI_type.isin(categories[category])]
@@ -426,28 +423,12 @@ if __name__ == "__main__":
     POIs = fetch_POIs(CONFIG = CONFIG,
                       network = network)
     log.info("Points of interest (POIs) loaded... ")
+    
+    weight_sum = helper.calc_weight_sum(CONFIG)
         
     scores = residential_buildings.apply(func = score_building,
                                          axis = 1,
-                                         args = (POIs, network, CONFIG))
-                                         
-
-    # dist_list = prepare_scoring(
-    #     buildings = residential_buildings,
-    #     POIs = POIs,
-    #     network = network)
-    # log.info("Distances from buildings to POIs calculated... ")
-    
-    # score_list = score_routes(
-    #     buildings = residential_buildings,
-    #     dist_list = dist_list,
-    #     CONFIG = CONFIG)
-    # log.info("Scores for routes calculated...")
-
-    # buildings = calc_building_scores(
-    #     score_list = score_list, 
-    #     CONFIG = CONFIG)
-    # log.info("Building scores assigned!")
+                                         args = (POIs, network, CONFIG, weight_sum))
 
     # export_scores(residential_buildings, persona_name, network, EXPORT_PATH)
     # log.info("Building scores saved!")

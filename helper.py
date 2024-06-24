@@ -39,6 +39,14 @@ def calc_shortest_path_length(
     else:
         return 99999999
 
+def calc_weight_sum(CONFIG: dict) -> int:
+    weight_factors = CONFIG["model_weight_factors"]
+    
+    weight_sum = 0
+    for weight in list(weight_factors.values()):
+        weight_sum = weight_sum + sum(weight)
+
+    return weight_sum
 
 def calc_shortest_path(
         end_node: int,
