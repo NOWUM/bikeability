@@ -435,27 +435,6 @@ class Suitability():
         edges.insert(loc=8, column="suitability_modifier", value=modifiers)
         
         network = ox.graph_from_gdfs(nodes, edges)
-        # if CONFIG['use_accidents']:
-        #     network = nx.from_pandas_edgelist(df=edges,
-        #                                       source="source",
-        #                                       target="target",
-        #                                       edge_attr=["length",
-        #                                                  "length_modified",
-        #                                                  "score_separation",
-        #                                                  "score_surface",
-        #                                                  "accident_count",
-        #                                                  "suitability_modifier"],
-        #                                       create_using=nx.MultiDiGraph())
-        # else:
-        #     network = nx.from_pandas_edgelist(df=edges,
-        #                                       source="source",
-        #                                       target="target",
-        #                                       edge_attr=["length",
-        #                                                  "length_modified",
-        #                                                  "score_separation",
-        #                                                  "score_surface",
-        #                                                  "suitability_modifier"],
-        #                                       create_using=nx.MultiDiGraph())
         network = ox.project_graph(network, to_crs="EPSG:25832")
         
         #remove isolated nodes
