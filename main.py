@@ -10,7 +10,8 @@ import visualisation
 import helper
 from bikeability_config import CONFIG
 from suitability import Suitability
-from tqdm import tqdm
+import swifter
+import tqdm
 
 import warnings
 
@@ -319,6 +320,7 @@ def score_building(building: pd.Series,
         Buildings dataframe including bikeability scores.
 
     """
+    swifter.set_defaults(progress_bar = False)    
     
     # The required number of POIs per category before the range is extended
     required_POIs = 10
@@ -337,7 +339,7 @@ def score_building(building: pd.Series,
                                       k = required_POIs)
         POIs_within = POIs.loc[shortest_distances.index]
         # Find the shortest (weighted) routes from building to POI
-        routes = POIs_within.node.apply(
+        routes = POIs_within.node.swifter.apply(
             helper.calc_shortest_path,
             args = (building["node"], network, ))
         # Extract lengths and suitability values from routes
@@ -409,14 +411,15 @@ def score_buildings(residential_buildings: gpd.GeoDataFrame,
     
     # sum up weights to scale them from 0 to 1
     weight_sum = helper.calc_weight_sum(CONFIG)
-    
-    # generate pandas functions with progress logging
+
+    # Create pandas methods with progress bar
     tqdm.pandas()
     
     # score buildings
-    scores = residential_buildings.progress_apply(func = score_building,
-                                                  axis = 1,
-                                                  args = (POIs, network, CONFIG, weight_sum))
+    scores = residential_buildings.progress_apply(
+        func = score_building,
+        axis = 1,
+        args = (POIs, network, CONFIG, weight_sum))
     
     buildings_scored = residential_buildings.copy()
     buildings_scored.insert(5, "score", scores)
@@ -445,14 +448,6 @@ if __name__ == "__main__":
     POIs = fetch_POIs(CONFIG = CONFIG,
                       network = network)
     log.info("Points of interest (POIs) loaded. Calculating scores... ")
-    
-    weight_sum = helper.calc_weight_sum(CONFIG)
-    
-    buildings_sample = residential_buildings[1::100]
-
-    scores = buildings_sample.swifter.apply(func = score_building,
-                                                  axis = 1,
-                                                  args = (POIs, network, CONFIG, weight_sum))
     
     buildings_scored = score_buildings(residential_buildings, POIs, network, CONFIG)
 
