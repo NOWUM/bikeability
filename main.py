@@ -10,6 +10,7 @@ import visualisation
 import helper
 from bikeability_config import CONFIG
 from suitability import Suitability
+from tqdm import tqdm
 
 import warnings
 
@@ -296,7 +297,7 @@ def score_building(building: pd.Series,
                    CONFIG: dict,
                    weight_sum: int):
     """
-    Calculate bikeability scores for buildings in the list using a suitability
+    Calculate bikeability scores for one building, using a suitability
     network.
 
     Parameters
@@ -309,6 +310,8 @@ def score_building(building: pd.Series,
         Node-Edge-Network of the relevant area.
     CONFIG : dict
         Bikeability configuration.
+    weight_sum: int
+        The sum value of all weight factors.
 
     Returns
     -------
@@ -399,14 +402,33 @@ def export_scores(buildings: gpd.GeoDataFrame,
     buildings_for_shp.to_file(f'{filepath}/{filename}.json')
     buildings_for_shp.to_file(f'{filepath}/shp/Walk_{persona_name}.shp')
 
+def score_buildings(residential_buildings: gpd.GeoDataFrame,
+                    POIs: gpd.GeoDataFrame,
+                    network: nx.MultiDiGraph,
+                    CONFIG: dict) -> gpd.GeoDataFrame:
+    
+    # sum up weights to scale them from 0 to 1
+    weight_sum = helper.calc_weight_sum(CONFIG)
+    
+    # generate pandas functions with progress logging
+    tqdm.pandas()
+    
+    # score buildings
+    scores = residential_buildings.progress_apply(func = score_building,
+                                                  axis = 1,
+                                                  args = (POIs, network, CONFIG, weight_sum))
+    
+    buildings_scored = residential_buildings.copy()
+    buildings_scored.insert(5, "score", scores)
+    
+    return buildings_scored
+
 if __name__ == "__main__":
     logging.basicConfig(
         filename="bikeability.log",
         level=logging.INFO,
         format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
         datefmt="%d-%m-%Y %H:%M:%S")
-    
-    
 
     # calculate suitability
     suitability = Suitability()
@@ -418,17 +440,21 @@ if __name__ == "__main__":
     
     # Download OSM buildings chart
     residential_buildings = fetch_and_filter_residences(city = CONFIG['city'], network = network)
-    log.info("Buildings loaded... ")
+    log.info("Buildings loaded. Loading POIs... ")
 
     POIs = fetch_POIs(CONFIG = CONFIG,
                       network = network)
-    log.info("Points of interest (POIs) loaded... ")
+    log.info("Points of interest (POIs) loaded. Calculating scores... ")
     
     weight_sum = helper.calc_weight_sum(CONFIG)
-        
-    scores = residential_buildings.apply(func = score_building,
-                                         axis = 1,
-                                         args = (POIs, network, CONFIG, weight_sum))
+    
+    buildings_sample = residential_buildings[1::100]
+
+    scores = buildings_sample.swifter.apply(func = score_building,
+                                                  axis = 1,
+                                                  args = (POIs, network, CONFIG, weight_sum))
+    
+    buildings_scored = score_buildings(residential_buildings, POIs, network, CONFIG)
 
     # export_scores(residential_buildings, persona_name, network, EXPORT_PATH)
     # log.info("Building scores saved!")
