@@ -23,17 +23,17 @@ FACTOR_WEIGHTS = {"separation": 1,
 # The numbers from 5 to 1 are representative of a decreasing level of quality.
 
 factors_separation = {5: 0, 
-                      4: 0.15,
-                      3: 0.3,
-                      2: 0.4,
-                      1: 0.6,
+                      4: 0.05,
+                      3: 0.15,
+                      2: 0.25,
+                      1: 0.4,
                       0: 0.9}
 
 factors_surface =    {5: 0,
-                      4: 0.1,
-                      3: 0.3,
-                      2: 0.5,
-                      1: 0.7,
+                      4: 0.05,
+                      3: 0.1,
+                      2: 0.25,
+                      1: 0.5,
                       0: 0.9}
 
 factors_traffic =    {5: 0,
