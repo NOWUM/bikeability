@@ -558,7 +558,8 @@ class Suitability():
             network_osm=network_osm,
             scoring=scoring,
             CONFIG=CONFIG)
-        
+        log.info(
+            "Successfully scored for surface area.")
         edges, network = self.suitability_to_network(nodes,
             edges, network, scoring, CONFIG)
         edges.sort_index(inplace = True)
