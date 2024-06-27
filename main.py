@@ -11,7 +11,7 @@ import helper
 from bikeability_config import CONFIG
 from suitability import Suitability
 import swifter
-import tqdm
+from tqdm import tqdm
 
 import warnings
 
@@ -338,10 +338,12 @@ def score_building(building: pd.Series,
                                       to_points = POIs_category.centroid,
                                       k = required_POIs)
         POIs_within = POIs.loc[shortest_distances.index]
+        
         # Find the shortest (weighted) routes from building to POI
         routes = POIs_within.node.swifter.apply(
             helper.calc_shortest_path,
-            args = (building["node"], network, ))
+            args = (building.node, network, ))
+        
         # Extract lengths and suitability values from routes
         route_values = helper.get_route_values(routes = routes,
                                           edges = edges)
@@ -436,6 +438,7 @@ if __name__ == "__main__":
     # calculate suitability
     suitability = Suitability()
     edges, network = suitability.eval_suitability(CONFIG)
+    log.info("Suitability network completed. Loading buildings... ")
     
     if CONFIG['visualize']:
         visualisation.create_suitability_visualisation(edges)
