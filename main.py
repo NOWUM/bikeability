@@ -338,9 +338,10 @@ def score_building(building: pd.Series,
                                       to_points = POIs_category.centroid,
                                       k = required_POIs)
         POIs_within = POIs.loc[shortest_distances.index]
+        POIs_within = POIs_within.reset_index(drop=True)
         
         # Find the shortest (weighted) routes from building to POI
-        routes = POIs_within.node.swifter.apply(
+        routes = POIs_within["node"].swifter.apply(
             helper.calc_shortest_path,
             args = (building.node, network, ))
         

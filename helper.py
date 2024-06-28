@@ -51,11 +51,13 @@ def calc_weight_sum(CONFIG: dict) -> int:
 def calc_shortest_path(
         end_node: int,
         start_node: int,
-        network: nx.MultiDiGraph) -> float:
+        network: nx.MultiDiGraph) -> list:
     """
     Calculates the shortest path between two points in the network as a series
     of nodes.
     """
+    end_node = int(end_node)
+    print(end_node)
     if nx.has_path(G = network, source=start_node, target=end_node):
         return nx.shortest_path(
             G=network,
