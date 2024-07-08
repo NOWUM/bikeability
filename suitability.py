@@ -57,12 +57,8 @@ class Suitability():
     
         '''
         scoring.insert(1, "score_separation", -1)
-        # Default value for cycleways is 4, for bicycle roads it's 5
-        cycleways = network_osm["highway"] == "cycleway"
-        bicycle_roads = network_osm["bicycle_road"] == "yes"
-        scoring.loc[bicycle_roads,
-                    "score_separation"] = 5
-        scoring.loc[cycleways, "score_separation"] = 4
+
+        
         # Default value for motorways areas is 0
         scoring.loc[network_osm["highway"].isin(["motorway"]),
                     "score_separation"] = 0
@@ -95,7 +91,15 @@ class Suitability():
                     "score_separation"] = 3
         scoring.loc[network_osm["cycleway"].isin(["share_busway", "track", "opposite_track"]),
                     "score_separation"] = 4
-
+                
+        cycleways = (network_osm["highway"] == "cycleway") | (network_osm["bicycle_road"] == "yes")
+        motor_traffic = network_osm["motor_vehicle"] == "yes"
+        scoring.loc[cycleways & motor_traffic,
+                    "score_separation"] = 4
+        
+        scoring.loc[cycleways & ~motor_traffic,
+                    "score_separation"] = 5
+        
         # missing scores for debugging purposes
         # if missing_scores is not empty, there is most likely a difference on how
         # osm data is handled locally
