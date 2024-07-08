@@ -6,24 +6,32 @@ from bikeability_config import USE_ACCIDENTS, EXPORT_PATH
 def create_suitability_visualisation(edges: pd.DataFrame):
     edges_for_vis = gpd.GeoDataFrame(edges, crs="EPSG:25832")
     edges_for_vis = edges_for_vis[~edges_for_vis.geometry.isna()]
-    edges_for_vis = edges_for_vis[['osmid', 'name', 'highway', 'suitability_modifier', 'score_surface', 'score_separation', "accident_count", 'geometry']]
+    edges_for_vis = edges_for_vis[['osmid', 'name', 'suitability_modifier', 'score_surface', 'score_separation', "accident_count", 'highway', 'geometry']]
     style_kwds = {"weight": 3}
 
+    edges_for_vis.rename(columns={'osmid': "OSM ID",
+                                  "name": "Name",
+                                  "suitability_modifier": "Tauglichkeits-Modifikator",
+                                  "score_surface": "Wertung Oberflächenqualität",
+                                  "score_separation": "Wertung Trennung",
+                                  "accident_count": "Anzahl Unfälle (3 Jahre)",
+                                  "highway": "OSM Highwaytyp"})
+
     scores_surface = folium.Map(tiles = "CartoDB positron")
-    scores_surface = edges_for_vis.explore(column = "score_surface", 
+    scores_surface = edges_for_vis.explore(column = "Wertung Oberflächenqualität", 
                                             cmap = "viridis", 
-                                            vmin = 0, 
-                                            vmax = 1,
+                                            vmin = 1, 
+                                            vmax = 5,
                                             style_kwds = style_kwds,
                                             m = scores_surface)
     scores_surface.save(f"{EXPORT_PATH}/surface.html")
     
     
     scores_separation = folium.Map(tiles = "CartoDB positron")
-    scores_separation = edges_for_vis.explore(column = "score_separation", 
+    scores_separation = edges_for_vis.explore(column = "Wertung Trennung", 
                                               cmap = "viridis", 
-                                              vmin = 0, 
-                                              vmax = 1,
+                                              vmin = 1, 
+                                              vmax = 5,
                                               style_kwds = style_kwds,
                                               m = scores_separation)
     scores_separation.save(f"{EXPORT_PATH}/separation.html")
@@ -31,7 +39,7 @@ def create_suitability_visualisation(edges: pd.DataFrame):
     
     
     suitability_score = folium.Map(tiles = "CartoDB positron")
-    suitability_score = edges_for_vis.explore(column = "suitability_modifier",
+    suitability_score = edges_for_vis.explore(column = "Tauglichkeits-Modifikator",
                                       cmap = "viridis",
                                       vmin = 0, 
                                       vmax = 1,
@@ -40,7 +48,7 @@ def create_suitability_visualisation(edges: pd.DataFrame):
     suitability_score.save(f"{EXPORT_PATH}/suitability.html")
 
     if USE_ACCIDENTS:
-        accident_count = edges_for_vis.explore(column = "accident_count",
+        accident_count = edges_for_vis.explore(column = "Anzahl Unfälle (3 Jahre)",
                                           cmap = "viridis",
                                           vmin = 0,
                                           vmax = 10)
