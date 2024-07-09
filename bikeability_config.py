@@ -5,7 +5,16 @@ PBF_PATH = ".\\pyrosm\\Aachen.osm.pbf" # leave empty when no protobuff file is a
 EXPORT_PATH = "results"
 CITY = "Aachen, Germany"
 
-
+MODEL_WEIGHT_FACTORS = {
+    "education": [6, 0, 0],
+    "doctors": [5, 1, 0],
+    "entertainment": [2, 0, 0],
+    "pharmacy": [2, 0, 0],
+    "financial": [2, 0, 0],
+    "sustenance": [4, 2, 0],
+    "supermarket": [8, 4, 1],
+    "food_shop": [5, 1, 0],
+    "office": [8, 4, 1]}
 
 DEFAULT_SCORES = {'separation': 2,
                   'surface': 2,
@@ -25,15 +34,15 @@ FACTOR_WEIGHTS = {"separation": 1,
 factors_separation = {5: 0, 
                       4: 0.05,
                       3: 0.15,
-                      2: 0.25,
-                      1: 0.4,
+                      2: 0.35,
+                      1: 0.6,
                       0: 0.9}
 
 factors_surface =    {5: 0,
                       4: 0.05,
                       3: 0.1,
-                      2: 0.25,
-                      1: 0.5,
+                      2: 0.35,
+                      1: 0.6,
                       0: 0.9}
 
 factors_traffic =    {5: 0,
@@ -72,17 +81,6 @@ WEIGHT_FACTORS_CATEGORIES = {
     "supermarket": ["supermarket"],
     "food_shop": ["bakery", "butcher", "cheese", "greengrocer", "deli"],
     "office": ["office"]}
-
-MODEL_WEIGHT_FACTORS = {
-    "education": [6, 0, 0],
-    "doctors": [5, 1, 0],
-    "entertainment": [2, 0, 0],
-    "pharmacy": [2, 0, 0],
-    "financial": [2, 0, 0],
-    "sustenance": [4, 2, 0],
-    "supermarket": [8, 4, 1],
-    "food_shop": [5, 1, 0],
-    "office": [8, 4, 1]}
 
 POIS_MODEL = {
     "amenity": 
