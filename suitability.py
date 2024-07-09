@@ -75,11 +75,11 @@ class Suitability():
         # scoring by "highway", which classifies the kind of way
         scoring.loc[network_osm["highway"].isin(["primary", "secondary", "rest"]),
                     "score_separation"] = 1
-        scoring.loc[network_osm["highway"].isin(["tertiary", "trunk", "residential", "road", "bus", "busway", "construction"]),
+        scoring.loc[network_osm["highway"].isin(["tertiary", "trunk", "road", "bus", "busway", "construction"]),
                     "score_separation"] = 2
-        scoring.loc[network_osm["highway"].isin(["living_street", "services", "service",
+        scoring.loc[network_osm["highway"].isin(["living_street", "residential", "services", "service",
                                                  "pedestrian", "living", "steps"]),
-                    "score_separation"] = 3  # this does not work
+                    "score_separation"] = 3 
         scoring.loc[network_osm["highway"].isin(["track", "bridleway", "footway", "path"]),
                     "score_separation"] = 4
 
