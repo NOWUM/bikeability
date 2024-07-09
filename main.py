@@ -10,7 +10,6 @@ import visualisation
 import helper
 from bikeability_config import CONFIG
 from suitability import Suitability
-import swifter
 from tqdm import tqdm
 
 import warnings
@@ -320,7 +319,6 @@ def score_building(building: pd.Series,
         Buildings dataframe including bikeability scores.
 
     """
-    swifter.set_defaults(progress_bar = False)    
     
     # The required number of POIs per category before the range is extended
     required_POIs = 10
@@ -341,7 +339,7 @@ def score_building(building: pd.Series,
         POIs_within = POIs_within.reset_index(drop=True)
         
         # Find the shortest (weighted) routes from building to POI
-        routes = POIs_within["node"].swifter.apply(
+        routes = POIs_within["node"].apply(
             helper.calc_shortest_path,
             args = (building.node, network, ))
         
