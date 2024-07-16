@@ -59,6 +59,10 @@ factors_accidents =  {5: 0,
                       1: 0.1,
                       0: 1}
 
+factors_lit = {2: 0,
+               1: 0.05,
+               0: 0.1}
+
 TRANSLATION_FACTORS = {"separation": factors_separation,
                        "surface": factors_surface,
                        "traffic": factors_traffic,
