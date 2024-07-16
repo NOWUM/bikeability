@@ -251,6 +251,20 @@ class Suitability():
         #             "score_surface"] = CONFIG['default_scores']['surface']
         return scoring, missing_scores
     
+    def score_route_lights(self, network_osm: pd.DataFrame, scoring: gpd.GeoDataFrame, CONFIG: dict) -> tuple():
+        
+        scoring.insert(1, "score_light", -1)
+        scoring.loc[network_osm["lit"].isin(["yes", "automatic", "sunset-sunrise"]),
+                    "score_light"] = 2
+        scoring.loc[network_osm["lit"].isin(["limited"]),
+                    "score_light"] = 1
+        scoring.loc[network_osm["lit"].isin(["no", "disused"]),
+                    "score_light"] = 0
+        
+        missing_scores = scoring["score_light"] == -1
+        scoring[missing_scores] = CONFIG["default_scores"]["light"]
+        return scoring
+    
     def complete_road_related(self, scoring: pd.DataFrame(), score: pd.Series(), score_type: str(), CONFIG: dict(), type_defaults: pd.DataFrame()) -> pd.Series():
         related_scores = scoring.loc[scoring.name.isin([score["name"]]), f"score_{score_type}"]
         related_scores = related_scores[related_scores!=-1]

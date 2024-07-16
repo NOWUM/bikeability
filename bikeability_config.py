@@ -18,7 +18,8 @@ MODEL_WEIGHT_FACTORS = {
 
 DEFAULT_SCORES = {'separation': 2,
                   'surface': 2,
-                  'traffic': 3}
+                  'traffic': 3,
+                  'light': 1}
 
 # translation scores to mathematical modifiers for route score
 
