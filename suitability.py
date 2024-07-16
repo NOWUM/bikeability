@@ -67,6 +67,20 @@ class Suitability():
                     "score_separation"] = 2
 
         # Scoring takes place from least specific to most specific
+        
+        network_osm.loc[network_osm["motor_vehicle"].str.contains("destination", na=False),
+                        "motor_vehicle"] = "destination"
+        network_osm.loc[network_osm["motor_vehicle"].str.contains("agricultural", na=False),
+                        "motor_vehicle"] = "agricultural"
+
+        # sharing a path with motorized vehicles is bad
+        scoring.loc[network_osm["motor_vehicle"].isin(["no", "permit", "agricultural"]),
+                    "score_separation"] = 4
+        scoring.loc[network_osm["motor_vehicle"].isin(["destination", "private",
+                                                       "delivery", "customers"]),
+                    "score_separation"] = 3
+        scoring.loc[network_osm["motor_vehicle"].isin(["yes", "permissive", "unknown"]),
+                    "score_separation"] = 1     
 
         # A bikeable sidepath is better than the road but worse than a separate cycleway
         scoring.loc[network_osm["bicycle"].isin(["use_sidepath", "optional_sidepath"]),
@@ -547,8 +561,8 @@ class Suitability():
         network_osm = self.import_network(CONFIG)
 
         # initialise scoring dataframe
-        scoring = network_osm[["name", "id", "tags", "osm_type", "highway", "geometry",
-                               "length"]]
+        scoring = network_osm[["name", "id", "tags", "osm_type", "highway", "geometry", 
+                               "motor_vehicle", "lit", "length"]]
 
         log.info("Starting to score for separation!")
         scoring, missing_scores = self.score_route_separation(
