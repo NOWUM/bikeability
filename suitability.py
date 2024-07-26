@@ -411,6 +411,7 @@ class Suitability():
         geometries = []
         modifiers = []
 
+
         if CONFIG['use_accidents']:
             accidents = acd.fetch_accidents(path=CONFIG['accident_path'])
             edges = acd.match_accidents_network(edges, accidents)
@@ -583,17 +584,26 @@ class Suitability():
             network_osm=network_osm,
             scoring=scoring,
             CONFIG=CONFIG)
-
         log.info(
             "Successfully scored for separation. Starting to score for surface area!")
+        
         scoring, missing_scores = self.score_route_surfaces(
             network_osm=network_osm,
             scoring=scoring,
             CONFIG=CONFIG)
         log.info(
-            "Successfully scored for surface area.")
+            "Successfully scored for surface area. Starting to score for light level!")
+        
+        scoring, missing_scores = self.score_route_lights(
+            network_osm=network_osm,
+            scoring=scoring,
+            CONFIG=CONFIG)
+        log.info(
+            "Successfully scored for light level. Starting to calculate suitability!")
+        
         edges, network = self.suitability_to_network(nodes,
             edges, network, scoring, CONFIG)
         edges.sort_index(inplace = True)
-        
+        log.info(
+            "Successfully calculated suitability!")
         return edges, network
