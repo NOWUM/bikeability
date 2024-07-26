@@ -1,15 +1,17 @@
-# Anwendung
-Im folgenden Abschnitt wird erläutert, wie mithilfe des entwickelten Modells und des bereitgestellten Programmcodes eine Bikeability-Bewertung durchgeführt werden kann. 
 
-## Eingabedaten
-Vor Durchführung der Bikeability-Berechnung ist eine Überprüfung der Eingabedaten notwendig. 
-Diese sind in der beigefügten Datei "bikeability_config.py" zu finden. 
 
-Der wichtigste Eingabewert ist dabei die Angabe der gewählten Stadt. Diese kann unter CITY im Format "[Stadt]/[Land]" angegeben werden. Sollte lokal auf dem Gerät bereits eine Protobuff-Datei zur betroffenen Stadt vorhanden sein, kann diese als "PBF_PATH" angegeben werden, ansonsten wird sie im Programmdurchlauf heruntergeladen. 
+# Application
+The following section explains how a bikeability assessment can be carried out using the model developed and the program code provided.
 
-An dieser Stelle muss, mittels des Parameters "USE_ACCIDENTS", ebenfalls angegeben werden, ob Unfalldaten verwendet werden sollen. Dies ist für nicht deutsche Städte nur möglich, wenn unter "ACCIDENT\_PATH" eine h5-Datei abgelegt wird, die Unfalldaten für die gewählte Stadt enthält. 
+## Input data
+Before performing the bikeability calculation, the input data must be checked.
+These can be found in the attached file "bikeability_config.py".
 
-## Profile
-Wenn für die Bikeability-Berechnung ein vom Default abweichendes Nutzerprofil, mit einer individuellen Bewertung der Wichtigkeit von POIs verwendet werden soll, kann dieses ebenfalls in der config-Datei angegeben werden. Das Format ist dabei folgendermaßen zu verstehen:
-POIs sind in 9 Kategorien unterteilt. Diese stehen jeweils symbolisch für eine Reihe an OSM-Tags, die im Programmdurchlauf der jeweiligen Kategorie zugeordnet werden.
-Jede Kategorie kann Gewichtsfaktoren erhalten, die repräsentieren, mit welcher Priorität die nächste, zweitnächste, etc. Instanz eines POI der jeweiligen Kategorie in den Score Bikeability-Score von Wohngebäuden eingeht. Die Anzahl dieser Gewichtsfaktoren kann beliebig groß sein, wirkt sich aber direkt auf die Laufzeit des Programms aus. Die Zahlenwerte der Gewichte können dabei beliebig groß sein, da sie nur im Verhältnis zu anderen Gewichtsfaktoren derselben Tabelle betrachtet werden. Das heißt, dass die Erreichbarkeit eines POI mit einem Gewichtsfaktor von 8 den achtfachen Einfluss auf den Score von Gebäuden hat, wie ein POI mit einem Gewichtsfaktor von 1. 
+The most important input value is the selected city. This can be entered under CITY in the format "[city]/[country]". If a protobuff file for the city in question already exists locally on the device, this can be specified as "PBF_PATH", otherwise it will be downloaded during the program run.
+
+At this point, the "USE_ACCIDENTS" parameter must also be used to specify whether accident data should be used. This is only possible for non-German cities if an h5 file containing accident data for the selected city is stored under "ACCIDENT\_PATH".
+
+## Profiles
+If a user profile that differs from the default with an individual evaluation of the importance of POIs is to be used for the bikeability calculation, this can also be specified in the config file. The format is to be understood as follows:
+POIs are divided into 9 categories. These each symbolize a series of OSM tags that are assigned to the respective category in the program run.
+Each category can be assigned weighting factors that represent the priority with which the next, second next, etc. instance of a POI in the respective category is assigned. Instance of a POI of the respective category is included in the bikeability score of residential buildings. The number of these weighting factors can be arbitrarily large, but has a direct effect on the runtime of the program. The numerical values of the weights can be as large as desired, as they are only considered in relation to other weight factors in the same table. This means that the accessibility of a POI with a weight factor of 8 has eight times as much influence on the score of buildings as a POI with a weight factor of 1.
