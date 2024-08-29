@@ -13,7 +13,9 @@ cd bikeability
 
 Install requirements:
 
-TODO
+```bash
+conda install environment.yml
+```
 
 # Model
 The program calculates 2 layers of scores.
