@@ -427,6 +427,38 @@ def score_buildings(residential_buildings: gpd.GeoDataFrame,
     
     return buildings_scored
 
+def save_results(buildings: gpd.GeoDataFrame,
+                 POIs: gpd.GeoDataFrame,
+                 CONFIG: dict)
+    """
+    Export the results as geojson, csv and visualisation
+
+    Parameters
+    ----------
+    buildings : gpd.GeoDataFrame
+        Dataframe containing a list of buildings with scores.
+    POIs : gpd.GeoDataFrame
+        Dataframe containing a list of POIs.
+    CONFIG : dict
+        Bikeability configuration.
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    # visualise buildings as html file
+    visualisation.create_building_visualisation(buildings)
+    #visualise POIs as html file
+    visualisation.create_POI_visusalisation(POIs)
+    #export as csv
+    export_path = CONFIG["export_path"]
+    buildings.to_csv(f"{export_path}/results.csv")
+    #export as geojson
+    buildings_for_output = buildings.drop(columns=["centroid"])
+    buildings_for_output.to_file(f"{export_path}/results.json", driver="GeoJSON")
+
 if __name__ == "__main__":
     logging.basicConfig(
         filename="bikeability.log",
