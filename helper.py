@@ -57,7 +57,6 @@ def calc_shortest_path(
     of nodes.
     """
     end_node = int(end_node)
-    print(end_node)
     if nx.has_path(G = network, source=start_node, target=end_node):
         return nx.shortest_path(
             G=network,

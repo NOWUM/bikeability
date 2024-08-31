@@ -594,12 +594,12 @@ class Suitability():
         log.info(
             "Successfully scored for surface area. Starting to score for light level!")
         
-        scoring, missing_scores = self.score_route_lights(
-            network_osm=network_osm,
-            scoring=scoring,
-            CONFIG=CONFIG)
-        log.info(
-            "Successfully scored for light level. Starting to calculate suitability!")
+        # scoring, missing_scores = self.score_route_lights(
+        #     network_osm=network_osm,
+        #     scoring=scoring,
+        #     CONFIG=CONFIG)
+        # log.info(
+        #     "Successfully scored for light level. Starting to calculate suitability!")
         
         edges, network = self.suitability_to_network(nodes,
             edges, network, scoring, CONFIG)
