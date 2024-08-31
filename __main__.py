@@ -429,7 +429,7 @@ def score_buildings(residential_buildings: gpd.GeoDataFrame,
 
 def save_results(buildings: gpd.GeoDataFrame,
                  POIs: gpd.GeoDataFrame,
-                 CONFIG: dict)
+                 CONFIG: dict):
     """
     Export the results as geojson, csv and visualisation
 
@@ -451,7 +451,7 @@ def save_results(buildings: gpd.GeoDataFrame,
     # visualise buildings as html file
     visualisation.create_building_visualisation(buildings)
     #visualise POIs as html file
-    visualisation.create_POI_visusalisation(POIs)
+    visualisation.create_POI_visualisation(POIs)
     #export as csv
     export_path = CONFIG["export_path"]
     buildings.to_csv(f"{export_path}/results.csv")
@@ -484,6 +484,10 @@ if __name__ == "__main__":
     log.info("Points of interest (POIs) loaded. Calculating scores... ")
     
     buildings_scored = score_buildings(residential_buildings, POIs, network, CONFIG)
+    
+    save_results(buildings = buildings_scored,
+                 POIs = POIs,
+                 CONFIG = CONFIG)
 
     # export_scores(residential_buildings, persona_name, network, EXPORT_PATH)
     # log.info("Building scores saved!")

@@ -83,7 +83,7 @@ def create_POI_visualisation(POIs: gpd.GeoDataFrame):
                                    "node": "Zugehöriger Knoten",
                                    "POI_category": "Kategorie"},
                         inplace = True)
-    POIs_for_vis = POIs_for_vis[POIs_for_vis.POI_category != "none"]
+    POIs_for_vis = POIs_for_vis[POIs_for_vis.Kategorie != "none"]
     POIs_vis = folium.Map(tiles = "CartoDB positron")
     POIs_vis = POIs.explore(column = "POI_category", m = POIs_vis)
     POIs_vis.save(f"{EXPORT_PATH}/POIs.html")
