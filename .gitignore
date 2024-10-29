@@ -11,3 +11,5 @@
 *.pkl
 testing/
 topology/
+
+/env/
