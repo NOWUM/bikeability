@@ -1,4 +1,4 @@
-USE_ACCIDENTS = True
+USE_ACCIDENTS = False
 VISUALIZE = False
 ACCIDENT_PATH = "accident_data/accidents_bike.h5"
 PBF_PATH = ".\\pyrosm\\Aachen.osm.pbf" # leave empty when no protobuff file is available
@@ -27,7 +27,8 @@ DEFAULT_SCORES = {'separation': 2,
 FACTOR_WEIGHTS = {"separation": 1,
                   "surface": 1,
                   "traffic": 1,
-                  "accidents": 1}
+                  "accidents": 1,
+                  "light": 1}
 
 # mathematical impact of different levels of service
 # The numbers from 5 to 1 are representative of a decreasing level of quality.
@@ -60,14 +61,15 @@ factors_accidents =  {5: 0,
                       1: 0.1,
                       0: 1}
 
-factors_lit = {2: 0,
-               1: 0.05,
-               0: 0.1}
+factors_light = {2: -0.05,
+               1: 0,
+               0: 0.05}
 
 TRANSLATION_FACTORS = {"separation": factors_separation,
                        "surface": factors_surface,
                        "traffic": factors_traffic,
-                       "accidents": factors_accidents}
+                       "accidents": factors_accidents,
+                       "light": factors_light}
 
 # The road types that aren't evaluated
 IGNORED_TYPES =["motorway", "service"]

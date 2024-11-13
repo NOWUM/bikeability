@@ -251,7 +251,7 @@ class Suitability():
         #             "score_surface"] = CONFIG['default_scores']['surface']
         return scoring, missing_scores
     
-    def score_route_lights(self, network_osm: pd.DataFrame, scoring: gpd.GeoDataFrame, CONFIG: dict) -> tuple():
+    def score_route_lights(self, network_osm: pd.DataFrame, scoring: gpd.GeoDataFrame, CONFIG: dict) -> tuple:
         
         scoring.insert(1, "score_light", -1)
         scoring.loc[network_osm["lit"].isin(["yes", "automatic", "sunset-sunrise"]),
@@ -262,10 +262,10 @@ class Suitability():
                     "score_light"] = 0
         
         missing_scores = scoring["score_light"] == -1
-        scoring[missing_scores] = CONFIG["default_scores"]["light"]
-        return scoring
+        scoring.loc[missing_scores, "score_light"] = CONFIG["default_scores"]["light"]
+        return scoring, missing_scores
     
-    def complete_road_related(self, scoring: pd.DataFrame(), score: pd.Series(), score_type: str(), CONFIG: dict(), type_defaults: pd.DataFrame()) -> pd.Series():
+    def complete_road_related(self, scoring: pd.DataFrame, score: pd.Series, score_type: str, CONFIG: dict, type_defaults: pd.DataFrame) -> pd.Series():
         related_scores = scoring.loc[scoring.name.isin([score["name"]]), f"score_{score_type}"]
         related_scores = related_scores[related_scores!=-1]
         if related_scores.size >= 1:
@@ -408,6 +408,7 @@ class Suitability():
         length_modified = []
         scores_separation = []
         scores_surfaces = []
+        scores_light = []
         geometries = []
         modifiers = []
 
@@ -433,38 +434,45 @@ class Suitability():
                 translation_factors = CONFIG['translation_factors']
                 score_separation = related_scores.score_separation.mean().round()
                 score_surface = related_scores.score_surface.mean().round()
+                score_light = related_scores.score_light.mean().round()
                 if CONFIG['use_accidents']:
                     score_accident = edge.score_accident
                 # Scale weight factors so they always accord to the same scaling
                 factor_separation = factor_weights["separation"]
                 factor_surface = factor_weights["surface"]
+                factor_light = factor_weights["light"]
                 # Factorise Scores and combine to edge score
                 if CONFIG['use_accidents']:
                     factor_accidents = factor_weights["accidents"]
                     modifier = 1 - \
                         translation_factors["separation"][score_separation] * factor_separation - \
                         translation_factors["surface"][score_surface] * factor_surface - \
-                        translation_factors["accidents"][score_accident] * factor_accidents
+                        translation_factors["accidents"][score_accident] * factor_accidents - \
+                        translation_factors["light"][score_light] * factor_light
                 else:
                     modifier = 1 - \
                         translation_factors["separation"][score_separation] * factor_separation - \
-                        translation_factors["surface"][score_surface] * factor_surface
+                        translation_factors["surface"][score_surface] * factor_surface - \
+                        translation_factors["light"][score_light] * factor_light
                 if modifier < 0.1:
                     modifier = 0.1
                 modifiers.append(modifier)
                 length_modified.append(edge.length / modifier)
                 scores_separation.append(score_separation)
                 scores_surfaces.append(score_surface)
+                scores_light.append(score_light)
             else:
                 modifier = 0.01
                 length_modified.append(edge.length / modifier)
                 modifiers.append(modifier)
                 scores_separation.append(0)
                 scores_surfaces.append(0)
+                scores_light.append(0)
 
         edges.insert(loc=8, column="length_modified", value=length_modified)
         edges.insert(loc=8, column="score_separation", value=scores_separation)
         edges.insert(loc=8, column="score_surface", value=scores_surfaces)
+        edges.insert(loc=8, column="score_light", value=scores_light)
         edges.insert(loc=8, column="suitability_modifier", value=modifiers)
         
         network = ox.graph_from_gdfs(nodes, edges)
@@ -594,12 +602,12 @@ class Suitability():
         log.info(
             "Successfully scored for surface area. Starting to score for light level!")
         
-        # scoring, missing_scores = self.score_route_lights(
-        #     network_osm=network_osm,
-        #     scoring=scoring,
-        #     CONFIG=CONFIG)
-        # log.info(
-        #     "Successfully scored for light level. Starting to calculate suitability!")
+        scoring, missing_scores = self.score_route_lights(
+            network_osm=network_osm,
+            scoring=scoring,
+            CONFIG=CONFIG)
+        log.info(
+            "Successfully scored for light level. Starting to calculate suitability!")
         
         edges, network = self.suitability_to_network(nodes,
             edges, network, scoring, CONFIG)
