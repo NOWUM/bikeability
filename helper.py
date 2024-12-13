@@ -67,8 +67,8 @@ def calc_shortest_path(
         return []
 
 def sigmoid(x):
-    midpoint = 3000
-    angle = 0.0015
+    midpoint = 5000
+    angle = 0.00085
     scale = 1
     y = scale / (scale + np.exp(angle*(x-midpoint)))
     return y
