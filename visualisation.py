@@ -62,8 +62,8 @@ def create_suitability_visualisation(edges: pd.DataFrame):
         # score_accident.save(f"{EXPORT_PATH}/accidents_score.html")
 
 def create_building_visualisation(buildings:gpd.GeoDataFrame):
-    buildings_for_vis = buildings[["osmid", "node", "building", "score", "geometry", "centroid"]]
-    buildings_for_vis.rename(columns = {"osmid": "OSM ID",
+    buildings_for_vis = buildings[["id", "node", "building", "score", "geometry", "centroid"]]
+    buildings_for_vis.rename(columns = {"id": "OSM ID",
                                         "node": "Zugehöriger Knoten",
                                         "building": "Gebäudetyp",
                                         "score": "Score"},
@@ -77,8 +77,8 @@ def create_building_visualisation(buildings:gpd.GeoDataFrame):
     buildings_vis.save(f"{EXPORT_PATH}/buildings.html")
     
 def create_POI_visualisation(POIs: gpd.GeoDataFrame):
-    POIs_for_vis = POIs[["name", "osmid", "geometry", "node", "POI_category"]]
-    POIs_for_vis.rename(columns = {"osmid": "OSM ID",
+    POIs_for_vis = POIs[["name", "id", "geometry", "node", "POI_category"]]
+    POIs_for_vis.rename(columns = {"id": "OSM ID",
                                    "name": "Name",
                                    "node": "Zugehöriger Knoten",
                                    "POI_category": "Kategorie"},
