@@ -1,7 +1,7 @@
 USE_ACCIDENTS = False
 VISUALIZE = False
 ACCIDENT_PATH = "accident_data/accidents_bike.h5"
-PBF_PATH = ".\\pyrosm\\Aachen.osm.pbf" # leave empty when no protobuff file is available
+PBF_PATH = "" # leave empty when no protobuff file is available
 EXPORT_PATH = "results"
 CITY = "Aachen, Germany"
 
