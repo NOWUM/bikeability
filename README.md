@@ -14,7 +14,7 @@ cd bikeability
 Install requirements:
 
 ```bash
-conda install environment.yml
+conda env create -f environment.yml
 ```
 
 # Model
